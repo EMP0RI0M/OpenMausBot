@@ -1,4 +1,4 @@
-package com.antigravityapp
+package com.openmausbot.companion.expo
 
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule

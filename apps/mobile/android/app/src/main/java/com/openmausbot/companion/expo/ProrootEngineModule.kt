@@ -1,4 +1,4 @@
-package com.antigravityapp
+package com.openmausbot.companion.expo
 
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -57,7 +57,6 @@ class ProrootEngineModule(reactContext: ReactApplicationContext) : ReactContextB
                         "/bin/sh", "-c", bashCommand
                     )
                 } else {
-                    // Fallback to direct process builder inside guest rootfs directory
                     listOf("/bin/sh", "-c", bashCommand)
                 }
 

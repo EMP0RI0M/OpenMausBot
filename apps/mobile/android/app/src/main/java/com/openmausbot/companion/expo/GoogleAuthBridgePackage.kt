@@ -1,4 +1,4 @@
-package com.antigravityapp
+package com.openmausbot.companion.expo
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
