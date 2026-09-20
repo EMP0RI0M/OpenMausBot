@@ -1,0 +1,49 @@
+workflows:
+  android-release:
+    name: Build OpenMausBot Android APK
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      node: 22.14.0
+      java: 17
+      vars:
+        PACKAGE_NAME: "com.openmausbot.companion.expo"
+    triggering:
+      events:
+        - push
+        - tag
+        - pull_request
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+    scripts:
+      - name: Install Node tools & dependencies
+        script: |
+          npm install -g pnpm@10.33.0
+          pnpm install --no-frozen-lockfile
+
+      - name: Ensure Android Keystore
+        script: |
+          mkdir -p apps/mobile/android/app
+          if [ ! -f "apps/mobile/android/app/debug.keystore" ]; then
+            keytool -genkey -v -keystore apps/mobile/android/app/debug.keystore \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build Android Release APK
+        script: |
+          cd apps/mobile/android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+    artifacts:
+      - apps/mobile/android/app/build/outputs/apk/**/*.apk
+    publishing:
+      email:
+        recipients:
+          - 46266943+milind-soni@users.noreply.github.com
+        notify:
+          success: true
+          failure: true
