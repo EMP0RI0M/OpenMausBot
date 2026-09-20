@@ -4,11 +4,6 @@ module.exports = function(api) {
     presets: [
       ['babel-preset-expo', { jsxImportSource: 'react' }]
     ],
-    plugins: [
-      '@babel/plugin-transform-classes',
-      '@babel/plugin-transform-class-properties',
-      '@babel/plugin-transform-private-methods',
-      '@babel/plugin-transform-private-property-in-object',
-    ],
   };
 };
+

@@ -110,11 +110,6 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@babel/plugin-transform-class-properties": "^8.0.1",
-    "@babel/plugin-transform-classes": "^8.0.5",
-    "@babel/plugin-transform-private-methods": "^8.0.1",
-    "@babel/plugin-transform-private-property-in-object": "^8.0.5",
-    "@babel/preset-env": "^8.0.6",
     "@tailwindcss/vite": "^4.1.11",
     "@types/node": "^26.2.0",
     "@types/qrcode-terminal": "0.12.2",
