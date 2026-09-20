@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch } from 'react-native';
 import {
-  Settings,
   Server,
   Volume2,
   Trash2,
@@ -9,7 +8,6 @@ import {
   Shield,
   ArrowLeft,
   Smartphone,
-  ExternalLink,
   Info,
 } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
@@ -24,14 +22,12 @@ interface SettingsScreenProps {
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onOpenPairing }) => {
   const {
-    connectionStatus,
     activeServer,
     disconnectServer,
   } = useOpenMaus();
 
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
-  const [autoScroll, setAutoScroll] = useState(true);
   const [pingLatency, setPingLatency] = useState<number | null>(null);
   const [isPinging, setIsPinging] = useState(false);
 

@@ -13,7 +13,6 @@ import { Plus, Check, X, Bot as BotIcon, Sparkles, RefreshCw } from 'lucide-reac
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
 import { BotAvatar } from '../components/BotAvatar';
-import { Bot } from '../types/models';
 
 interface BotsScreenProps {
   onClose: () => void;

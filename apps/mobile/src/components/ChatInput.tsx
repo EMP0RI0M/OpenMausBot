@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
-import { Send, Square, Mic, MicOff, Sparkles, Paperclip } from 'lucide-react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { Send, Square, Mic, MicOff } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { triggerHaptic } from '../services/haptics';
 

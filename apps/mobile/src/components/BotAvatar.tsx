@@ -12,7 +12,7 @@ interface BotAvatarProps {
 
 export const BotAvatar: React.FC<BotAvatarProps> = ({
   name,
-  provider = 'claude',
+  provider: _provider = 'claude',
   color = Colors.primary,
   size = 40,
   status,

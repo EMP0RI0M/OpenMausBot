@@ -6,7 +6,7 @@ import { MessageItem } from '../components/MessageItem';
 import { ChatInput } from '../components/ChatInput';
 import { AttentionBanner } from '../components/AttentionBanner';
 import { Header } from '../components/Header';
-import { Bot, Message } from '../types/models';
+import { Message } from '../types/models';
 
 interface ChatScreenProps {
   onOpenBots: () => void;

@@ -6,11 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { QrCode, Link2, Shield, Check, Server, Trash2, ArrowLeft } from 'lucide-react-native';
+import { QrCode, Link2, Shield, Server, Trash2, ArrowLeft } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
 import { triggerHaptic } from '../services/haptics';
@@ -25,9 +24,7 @@ export const PairingScreen: React.FC<PairingScreenProps> = ({ onClose }) => {
   const {
     pairServer,
     connectDirect,
-    connectionStatus,
     activeServer,
-    savedServers,
     disconnectServer,
   } = useOpenMaus();
 
@@ -35,7 +32,6 @@ export const PairingScreen: React.FC<PairingScreenProps> = ({ onClose }) => {
   const [serverUrl, setServerUrl] = useState('http://127.0.0.1:8810');
   const [pairCode, setPairCode] = useState('');
   const [directToken, setDirectToken] = useState('');
-  const [serverName, setServerName] = useState('');
   const [isPairing, setIsPairing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -49,7 +45,7 @@ export const PairingScreen: React.FC<PairingScreenProps> = ({ onClose }) => {
     setErrorMessage('');
     setIsPairing(true);
     try {
-      await pairServer(serverUrl, pairCode, serverName || 'Desktop Maus');
+      await pairServer(serverUrl, pairCode, 'Desktop Maus');
       onClose();
     } catch (err: any) {
       setErrorMessage(err.message || 'Pairing failed. Check server address and pairing code.');
@@ -66,7 +62,7 @@ export const PairingScreen: React.FC<PairingScreenProps> = ({ onClose }) => {
     setErrorMessage('');
     setIsPairing(true);
     try {
-      await connectDirect(serverUrl, directToken, serverName || 'Custom Node');
+      await connectDirect(serverUrl, directToken, 'Custom Node');
       onClose();
     } catch (err: any) {
       setErrorMessage(err.message || 'Connection failed.');

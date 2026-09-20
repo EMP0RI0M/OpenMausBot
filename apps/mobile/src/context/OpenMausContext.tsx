@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Bot, Message, Routine, ServerEndpoint, ConnectionStatus, OptionCard } from '../types/models';
+import { Bot, Message, Routine, ServerEndpoint, ConnectionStatus } from '../types/models';
 import { OpenMausApiClient } from '../services/api';
 import { StorageService } from '../services/storage';
 import { triggerHaptic } from '../services/haptics';
@@ -299,7 +299,7 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setIsGenerating(true);
       try {
         await apiClient.sendMessage(activeBotId, text);
-      } catch (e) {
+      } catch {
         triggerHaptic.error();
       } finally {
         setIsGenerating(false);
@@ -365,7 +365,7 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         await apiClient.respondToCard(activeBotId, requestId, choice, behavior);
         triggerHaptic.success();
-      } catch (e) {
+      } catch {
         triggerHaptic.error();
       }
     } else {

@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Switch } from 'react-native';
-import { Calendar, Play, CheckCircle2, Clock, ArrowLeft, RefreshCw } from 'lucide-react-native';
+import { Play, Clock, ArrowLeft, RefreshCw } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
-import { Routine } from '../types/models';
 
 interface RoutinesScreenProps {
   onClose: () => void;

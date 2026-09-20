@@ -1,4 +1,4 @@
-import { Bot, Message, OptionCard, ToolActivity } from '../types/models';
+import { Bot, Message } from '../types/models';
 
 export interface PairingResponse {
   token: string;
@@ -43,7 +43,7 @@ export class OpenMausApiClient {
         headers: this.getHeaders(),
       });
       return { ok: res.ok, status: res.status };
-    } catch (e) {
+    } catch {
       return { ok: false, status: 0 };
     }
   }
