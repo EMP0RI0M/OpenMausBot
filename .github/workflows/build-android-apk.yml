@@ -50,6 +50,13 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x apps/mobile/android/gradlew
 
+      - name: Ensure Debug Keystore Exists
+        run: |
+          if [ ! -f apps/mobile/android/app/debug.keystore ]; then
+            echo "Generating debug.keystore..."
+            keytool -genkey -v -keystore apps/mobile/android/app/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: Build Android Release APK
         working-directory: apps/mobile/android
         run: ./gradlew assembleRelease --no-daemon -x lint -x test

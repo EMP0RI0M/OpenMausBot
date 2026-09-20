@@ -32,6 +32,7 @@ cloudflare/control-plane/worker-configuration.d.ts
 # gets dropped wherever the terminal happened to be.
 *.jks
 *.keystore
+!apps/mobile/android/app/debug.keystore
 *.p12
 
 # per-tenant deploy settings (see deploy/.env.example)
