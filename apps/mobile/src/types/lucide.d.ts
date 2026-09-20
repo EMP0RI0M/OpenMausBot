@@ -1,0 +1,55 @@
+declare module 'lucide-react-native' {
+  import React from 'react';
+  export interface IconProps {
+    color?: string;
+    size?: string | number;
+    strokeWidth?: string | number;
+    fill?: string;
+    style?: any;
+    [key: string]: any;
+  }
+  export type LucideIcon = React.FC<IconProps>;
+  export const ArrowLeft: LucideIcon;
+  export const ArrowRight: LucideIcon;
+  export const Activity: LucideIcon;
+  export const AlertCircle: LucideIcon;
+  export const Bot: LucideIcon;
+  export const Calendar: LucideIcon;
+  export const Check: LucideIcon;
+  export const CheckCircle2: LucideIcon;
+  export const ChevronDown: LucideIcon;
+  export const ChevronUp: LucideIcon;
+  export const Clock: LucideIcon;
+  export const Copy: LucideIcon;
+  export const ExternalLink: LucideIcon;
+  export const HelpCircle: LucideIcon;
+  export const Info: LucideIcon;
+  export const Link2: LucideIcon;
+  export const MessageSquare: LucideIcon;
+  export const Mic: LucideIcon;
+  export const MicOff: LucideIcon;
+  export const Paperclip: LucideIcon;
+  export const Play: LucideIcon;
+  export const Plus: LucideIcon;
+  export const QrCode: LucideIcon;
+  export const Radio: LucideIcon;
+  export const RefreshCw: LucideIcon;
+  export const Send: LucideIcon;
+  export const Server: LucideIcon;
+  export const Settings: LucideIcon;
+  export const Shield: LucideIcon;
+  export const ShieldAlert: LucideIcon;
+  export const ShieldCheck: LucideIcon;
+  export const Smartphone: LucideIcon;
+  export const Sparkles: LucideIcon;
+  export const Square: LucideIcon;
+  export const Terminal: LucideIcon;
+  export const Trash2: LucideIcon;
+  export const Users: LucideIcon;
+  export const Volume2: LucideIcon;
+  export const VolumeX: LucideIcon;
+  export const Wifi: LucideIcon;
+  export const WifiOff: LucideIcon;
+  export const X: LucideIcon;
+  export const XCircle: LucideIcon;
+}

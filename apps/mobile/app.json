@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "OpenMausBot",
+    "slug": "openmausbot-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090A0F"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.openmausbot.companion.expo",
+      "infoPlist": {
+        "NSCameraUsageDescription": "OpenMausBot uses camera to scan desktop pairing QR codes."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#090A0F"
+      },
+      "package": "com.openmausbot.companion.expo",
+      "permissions": [
+        "CAMERA",
+        "INTERNET"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow OpenMausBot to scan QR codes to pair with your desktop instance."
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "scheme": "openmausbot"
+  }
+}

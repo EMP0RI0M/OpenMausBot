@@ -1,0 +1,446 @@
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { Bot, Message, Routine, ServerEndpoint, ConnectionStatus, OptionCard } from '../types/models';
+import { OpenMausApiClient } from '../services/api';
+import { StorageService } from '../services/storage';
+import { triggerHaptic } from '../services/haptics';
+import { INITIAL_MOCK_BOTS, INITIAL_MOCK_MESSAGES, INITIAL_MOCK_ROUTINES } from './mockData';
+
+interface OpenMausContextType {
+  connectionStatus: ConnectionStatus;
+  activeServer: ServerEndpoint | null;
+  savedServers: ServerEndpoint[];
+  bots: Bot[];
+  activeBot: Bot | null;
+  activeBotId: string;
+  activeMessages: Message[];
+  routines: Routine[];
+  isGenerating: boolean;
+  attentionItemsCount: number;
+
+  pairServer: (url: string, code: string, name?: string) => Promise<void>;
+  connectDirect: (url: string, token: string, name?: string) => Promise<void>;
+  disconnectServer: () => Promise<void>;
+  selectBot: (botId: string) => void;
+  createBot: (name: string, provider?: string, model?: string, prompt?: string) => Promise<void>;
+  sendMessage: (text: string) => Promise<void>;
+  respondToCard: (requestId: string, choice: string, isPermission: boolean, allowKey?: string) => Promise<void>;
+  interruptActiveTurn: () => Promise<void>;
+  toggleRoutine: (routineId: string) => void;
+  runRoutine: (routineId: string) => Promise<void>;
+  refreshFleet: () => Promise<void>;
+}
+
+const OpenMausContext = createContext<OpenMausContextType | undefined>(undefined);
+
+export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('standalone');
+  const [activeServer, setActiveServer] = useState<ServerEndpoint | null>(null);
+  const [savedServers, setSavedServers] = useState<ServerEndpoint[]>([]);
+  const [bots, setBots] = useState<Bot[]>(INITIAL_MOCK_BOTS);
+  const [activeBotId, setActiveBotId] = useState<string>('bot_scout');
+  const [messagesMap, setMessagesMap] = useState<Record<string, Message[]>>(INITIAL_MOCK_MESSAGES);
+  const [routines, setRoutines] = useState<Routine[]>(INITIAL_MOCK_ROUTINES);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [apiClient, setApiClient] = useState<OpenMausApiClient | null>(null);
+
+  // Load persisted server and fallback data on startup
+  useEffect(() => {
+    (async () => {
+      const saved = await StorageService.getServersList();
+      setSavedServers(saved);
+
+      const current = await StorageService.getActiveServer();
+      if (current) {
+        const token = await StorageService.getDeviceToken(current.url);
+        if (token) {
+          const client = new OpenMausApiClient(current.url, token);
+          setApiClient(client);
+          setActiveServer(current);
+          setConnectionStatus('connecting');
+
+          try {
+            const health = await client.checkHealth();
+            if (health.ok) {
+              setConnectionStatus('connected');
+              const remoteBots = await client.fetchBots();
+              if (remoteBots.length > 0) {
+                setBots(remoteBots);
+                setActiveBotId(remoteBots[0].id);
+              }
+            } else {
+              setConnectionStatus('disconnected');
+            }
+          } catch {
+            setConnectionStatus('disconnected');
+          }
+        }
+      }
+    })();
+  }, []);
+
+  // Listen to SSE events when connected
+  useEffect(() => {
+    if (connectionStatus === 'connected' && apiClient) {
+      const unsubscribe = apiClient.subscribeToEvents(
+        (event) => {
+          if (event.type === 'message' || event.type === 'token') {
+            // handle streaming token or incoming message
+            if (event.botId) {
+              setMessagesMap((prev) => {
+                const currentList = prev[event.botId] || [];
+                return {
+                  ...prev,
+                  [event.botId]: [...currentList, event.message],
+                };
+              });
+            }
+          } else if (event.type === 'card' && event.botId) {
+            triggerHaptic.warning();
+          } else if (event.type === 'status_change') {
+            setBots((prev) =>
+              prev.map((b) => (b.id === event.botId ? { ...b, status: event.status } : b))
+            );
+          }
+        },
+        (err) => {
+          console.warn('SSE connection error:', err);
+        }
+      );
+      return () => unsubscribe();
+    }
+  }, [connectionStatus, apiClient]);
+
+  // Count attention cards across all messages
+  const attentionItemsCount = Object.values(messagesMap).reduce((count, msgs) => {
+    const pendingInBot = msgs.filter((m) => m.optionCard && !m.optionCard.answered && !m.optionCard.dismissed);
+    return count + pendingInBot.length;
+  }, 0);
+
+  const activeBot = bots.find((b) => b.id === activeBotId) || bots[0] || null;
+  const activeMessages = messagesMap[activeBotId] || [];
+
+  const selectBot = useCallback((botId: string) => {
+    setActiveBotId(botId);
+    triggerHaptic.light();
+    if (apiClient && connectionStatus === 'connected') {
+      apiClient.markAsRead(botId);
+      apiClient.fetchMessages(botId).then((msgs) => {
+        if (msgs.length > 0) {
+          setMessagesMap((prev) => ({ ...prev, [botId]: msgs }));
+        }
+      }).catch(() => {});
+    }
+  }, [apiClient, connectionStatus]);
+
+  const pairServer = async (url: string, code: string, name: string = 'Desktop Maus') => {
+    triggerHaptic.medium();
+    setConnectionStatus('connecting');
+    try {
+      const cleanUrl = url.trim().replace(/\/+$/, '');
+      const client = new OpenMausApiClient(cleanUrl);
+      const pairRes = await client.pairWithCode(code);
+
+      client.setToken(pairRes.token);
+      await StorageService.saveDeviceToken(cleanUrl, pairRes.token);
+
+      const endpoint: ServerEndpoint = {
+        url: cleanUrl,
+        name: name || pairRes.deviceName || 'Maus Server',
+        token: pairRes.token,
+        isTailscale: cleanUrl.includes('.ts.net'),
+        isHostedHttps: cleanUrl.startsWith('https://'),
+        lastConnected: Date.now(),
+      };
+
+      await StorageService.saveActiveServer(endpoint);
+      const updatedList = [endpoint, ...savedServers.filter((s) => s.url !== endpoint.url)];
+      await StorageService.saveServersList(updatedList);
+
+      setSavedServers(updatedList);
+      setActiveServer(endpoint);
+      setApiClient(client);
+      setConnectionStatus('connected');
+      triggerHaptic.success();
+
+      // Fetch initial remote fleet
+      const remoteBots = await client.fetchBots();
+      if (remoteBots.length > 0) {
+        setBots(remoteBots);
+        setActiveBotId(remoteBots[0].id);
+      }
+    } catch (e) {
+      setConnectionStatus('disconnected');
+      triggerHaptic.error();
+      throw e;
+    }
+  };
+
+  const connectDirect = async (url: string, token: string, name: string = 'Custom Endpoint') => {
+    triggerHaptic.medium();
+    setConnectionStatus('connecting');
+    try {
+      const cleanUrl = url.trim().replace(/\/+$/, '');
+      const client = new OpenMausApiClient(cleanUrl, token);
+      const health = await client.checkHealth();
+
+      if (!health.ok) {
+        throw new Error('Server returned unhealthy response');
+      }
+
+      await StorageService.saveDeviceToken(cleanUrl, token);
+      const endpoint: ServerEndpoint = {
+        url: cleanUrl,
+        name,
+        token,
+        lastConnected: Date.now(),
+      };
+
+      await StorageService.saveActiveServer(endpoint);
+      const updatedList = [endpoint, ...savedServers.filter((s) => s.url !== endpoint.url)];
+      await StorageService.saveServersList(updatedList);
+
+      setSavedServers(updatedList);
+      setActiveServer(endpoint);
+      setApiClient(client);
+      setConnectionStatus('connected');
+      triggerHaptic.success();
+
+      const remoteBots = await client.fetchBots();
+      if (remoteBots.length > 0) {
+        setBots(remoteBots);
+        setActiveBotId(remoteBots[0].id);
+      }
+    } catch (e) {
+      setConnectionStatus('disconnected');
+      triggerHaptic.error();
+      throw e;
+    }
+  };
+
+  const disconnectServer = async () => {
+    triggerHaptic.light();
+    await StorageService.saveActiveServer({ url: '', name: '' });
+    setActiveServer(null);
+    setApiClient(null);
+    setConnectionStatus('standalone');
+  };
+
+  const refreshFleet = async () => {
+    if (apiClient && connectionStatus === 'connected') {
+      try {
+        const remoteBots = await apiClient.fetchBots();
+        if (remoteBots.length > 0) {
+          setBots(remoteBots);
+        }
+      } catch (e) {
+        console.warn('Failed to refresh bots', e);
+      }
+    }
+  };
+
+  const createBot = async (name: string, provider: string = 'claude', model: string = 'claude-3-5-sonnet', prompt?: string) => {
+    triggerHaptic.medium();
+    if (apiClient && connectionStatus === 'connected') {
+      const newBot = await apiClient.createBot({ name, provider, model, prompt });
+      setBots((prev) => [...prev, newBot]);
+      setActiveBotId(newBot.id);
+    } else {
+      // Local standalone bot creation
+      const localBot: Bot = {
+        id: `bot_${Date.now()}`,
+        name,
+        provider: provider as any,
+        model,
+        color: '#A855F7',
+        status: 'idle',
+        systemPrompt: prompt || 'You are an autonomous agent in OpenMausBot.',
+        lastActive: Date.now(),
+        unreadCount: 0,
+        hasPendingAction: false,
+      };
+      setBots((prev) => [...prev, localBot]);
+      setActiveBotId(localBot.id);
+      setMessagesMap((prev) => ({
+        ...prev,
+        [localBot.id]: [
+          {
+            id: `msg_${Date.now()}`,
+            botId: localBot.id,
+            threadId: 'main',
+            role: 'assistant',
+            content: `Agent **${name}** is online and ready with model \`${model}\`.`,
+            createdAt: Date.now(),
+          }
+        ]
+      }));
+    }
+    triggerHaptic.success();
+  };
+
+  const sendMessage = async (text: string) => {
+    if (!text.trim()) return;
+    triggerHaptic.light();
+
+    const userMsg: Message = {
+      id: `user_${Date.now()}`,
+      botId: activeBotId,
+      threadId: 'main',
+      role: 'user',
+      content: text,
+      createdAt: Date.now(),
+    };
+
+    setMessagesMap((prev) => ({
+      ...prev,
+      [activeBotId]: [...(prev[activeBotId] || []), userMsg],
+    }));
+
+    if (apiClient && connectionStatus === 'connected') {
+      setIsGenerating(true);
+      try {
+        await apiClient.sendMessage(activeBotId, text);
+      } catch (e) {
+        triggerHaptic.error();
+      } finally {
+        setIsGenerating(false);
+      }
+    } else {
+      // Standalone simulator response
+      setIsGenerating(true);
+      setTimeout(() => {
+        const replyMsg: Message = {
+          id: `asst_${Date.now()}`,
+          botId: activeBotId,
+          threadId: 'main',
+          role: 'assistant',
+          content: `I processed your request: "${text}".\n\nAll tools and local environment checks are nominal.`,
+          createdAt: Date.now(),
+          toolActivities: [
+            {
+              name: 'sandbox::execute',
+              ok: true,
+              spoken: 'Executed sandbox task successfully',
+              timestamp: Date.now(),
+            }
+          ]
+        };
+        setMessagesMap((prev) => ({
+          ...prev,
+          [activeBotId]: [...(prev[activeBotId] || []), replyMsg],
+        }));
+        setIsGenerating(false);
+        triggerHaptic.success();
+      }, 1200);
+    }
+  };
+
+  const respondToCard = async (requestId: string, choice: string, isPermission: boolean, allowKey?: string) => {
+    triggerHaptic.medium();
+    const behavior = choice.toLowerCase() === 'deny' ? 'deny' : 'allow';
+
+    // Mark card locally
+    setMessagesMap((prev) => {
+      const list = prev[activeBotId] || [];
+      const updated = list.map((m) => {
+        if (m.optionCard && m.optionCard.requestId === requestId) {
+          return {
+            ...m,
+            optionCard: {
+              ...m.optionCard,
+              answered: choice,
+              answeredText: choice,
+            },
+          };
+        }
+        return m;
+      });
+      return { ...prev, [activeBotId]: updated };
+    });
+
+    if (choice.toLowerCase().includes('always allow') && allowKey && apiClient && connectionStatus === 'connected') {
+      await apiClient.alwaysAllowPermission(activeBotId, allowKey);
+    }
+
+    if (apiClient && connectionStatus === 'connected') {
+      try {
+        await apiClient.respondToCard(activeBotId, requestId, choice, behavior);
+        triggerHaptic.success();
+      } catch (e) {
+        triggerHaptic.error();
+      }
+    } else {
+      triggerHaptic.success();
+    }
+  };
+
+  const interruptActiveTurn = async () => {
+    triggerHaptic.heavy();
+    setIsGenerating(false);
+    if (apiClient && connectionStatus === 'connected') {
+      await apiClient.interrupt(activeBotId);
+    }
+  };
+
+  const toggleRoutine = (routineId: string) => {
+    triggerHaptic.light();
+    setRoutines((prev) =>
+      prev.map((r) => (r.id === routineId ? { ...r, enabled: !r.enabled } : r))
+    );
+  };
+
+  const runRoutine = async (routineId: string) => {
+    triggerHaptic.medium();
+    setRoutines((prev) =>
+      prev.map((r) => (r.id === routineId ? { ...r, status: 'running' } : r))
+    );
+
+    setTimeout(() => {
+      setRoutines((prev) =>
+        prev.map((r) =>
+          r.id === routineId
+            ? { ...r, status: 'success', lastRun: Date.now() }
+            : r
+        )
+      );
+      triggerHaptic.success();
+    }, 1500);
+  };
+
+  return (
+    <OpenMausContext.Provider
+      value={{
+        connectionStatus,
+        activeServer,
+        savedServers,
+        bots,
+        activeBot,
+        activeBotId,
+        activeMessages,
+        routines,
+        isGenerating,
+        attentionItemsCount,
+        pairServer,
+        connectDirect,
+        disconnectServer,
+        selectBot,
+        createBot,
+        sendMessage,
+        respondToCard,
+        interruptActiveTurn,
+        toggleRoutine,
+        runRoutine,
+        refreshFleet,
+      }}
+    >
+      {children}
+    </OpenMausContext.Provider>
+  );
+};
+
+export const useOpenMaus = () => {
+  const context = useContext(OpenMausContext);
+  if (!context) {
+    throw new Error('useOpenMaus must be used within an OpenMausProvider');
+  }
+  return context;
+};
