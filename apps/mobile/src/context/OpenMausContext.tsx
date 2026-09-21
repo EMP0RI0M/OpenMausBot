@@ -97,7 +97,11 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Restore local persistent messages
         const storedMessages = await AsyncStorage.getItem('@openmaus_messages');
         if (storedMessages) {
-          setMessagesMap(JSON.parse(storedMessages));
+          try {
+            setMessagesMap(JSON.parse(storedMessages));
+          } catch {
+            // ignore malformed cache
+          }
         }
       } catch (err) {
         console.warn('Error loading persisted context:', err);

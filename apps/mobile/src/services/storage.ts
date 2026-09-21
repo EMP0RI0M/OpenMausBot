@@ -11,44 +11,82 @@ const STORAGE_KEYS = {
   PREFERENCES: 'omb_user_preferences',
 };
 
+const isSecureStoreAvailable = (): boolean => {
+  return (
+    Platform.OS !== 'web' &&
+    typeof SecureStore !== 'undefined' &&
+    SecureStore !== null &&
+    typeof SecureStore.setItemAsync === 'function' &&
+    typeof SecureStore.getItemAsync === 'function'
+  );
+};
+
 export const StorageService = {
-  // Secure Device Token storage
+  // Secure Device Token storage with reliable AsyncStorage fallback
   saveDeviceToken: async (serverUrl: string, token: string): Promise<void> => {
     const key = `token_${encodeURIComponent(serverUrl)}`;
-    if (Platform.OS === 'web') {
+    try {
+      if (isSecureStoreAvailable()) {
+        await SecureStore.setItemAsync(key, token);
+        return;
+      }
+    } catch {
+      // Fallback to AsyncStorage on any native SecureStore failure
+    }
+    try {
       await AsyncStorage.setItem(key, token);
-    } else {
-      await SecureStore.setItemAsync(key, token);
+    } catch (e) {
+      console.warn('StorageService.saveDeviceToken error:', e);
     }
   },
 
   getDeviceToken: async (serverUrl: string): Promise<string | null> => {
     const key = `token_${encodeURIComponent(serverUrl)}`;
-    if (Platform.OS === 'web') {
+    try {
+      if (isSecureStoreAvailable()) {
+        const val = await SecureStore.getItemAsync(key);
+        if (val) return val;
+      }
+    } catch {
+      // Fallback to AsyncStorage
+    }
+    try {
       return await AsyncStorage.getItem(key);
-    } else {
-      return await SecureStore.getItemAsync(key);
+    } catch (e) {
+      console.warn('StorageService.getDeviceToken error:', e);
+      return null;
     }
   },
 
   deleteDeviceToken: async (serverUrl: string): Promise<void> => {
     const key = `token_${encodeURIComponent(serverUrl)}`;
-    if (Platform.OS === 'web') {
+    try {
+      if (isSecureStoreAvailable() && typeof SecureStore.deleteItemAsync === 'function') {
+        await SecureStore.deleteItemAsync(key);
+      }
+    } catch {
+      // ignore
+    }
+    try {
       await AsyncStorage.removeItem(key);
-    } else {
-      await SecureStore.deleteItemAsync(key);
+    } catch (e) {
+      console.warn('StorageService.deleteDeviceToken error:', e);
     }
   },
 
   // Server endpoints
   saveActiveServer: async (endpoint: ServerEndpoint): Promise<void> => {
-    await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_SERVER, JSON.stringify(endpoint));
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_SERVER, JSON.stringify(endpoint));
+    } catch (e) {
+      console.warn('StorageService.saveActiveServer error:', e);
+    }
   },
 
   getActiveServer: async (): Promise<ServerEndpoint | null> => {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_SERVER);
-    if (!data) return null;
     try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_SERVER);
+      if (!data) return null;
       return JSON.parse(data);
     } catch {
       return null;
@@ -56,13 +94,17 @@ export const StorageService = {
   },
 
   saveServersList: async (endpoints: ServerEndpoint[]): Promise<void> => {
-    await AsyncStorage.setItem(STORAGE_KEYS.SERVERS_LIST, JSON.stringify(endpoints));
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.SERVERS_LIST, JSON.stringify(endpoints));
+    } catch (e) {
+      console.warn('StorageService.saveServersList error:', e);
+    }
   },
 
   getServersList: async (): Promise<ServerEndpoint[]> => {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.SERVERS_LIST);
-    if (!data) return [];
     try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.SERVERS_LIST);
+      if (!data) return [];
       return JSON.parse(data);
     } catch {
       return [];
@@ -71,13 +113,17 @@ export const StorageService = {
 
   // Standalone offline bots & messages caching
   saveOfflineBots: async (bots: Bot[]): Promise<void> => {
-    await AsyncStorage.setItem(STORAGE_KEYS.STANDALONE_BOTS, JSON.stringify(bots));
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.STANDALONE_BOTS, JSON.stringify(bots));
+    } catch (e) {
+      console.warn('StorageService.saveOfflineBots error:', e);
+    }
   },
 
   getOfflineBots: async (): Promise<Bot[]> => {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.STANDALONE_BOTS);
-    if (!data) return [];
     try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.STANDALONE_BOTS);
+      if (!data) return [];
       return JSON.parse(data);
     } catch {
       return [];
@@ -85,13 +131,17 @@ export const StorageService = {
   },
 
   saveOfflineMessages: async (messages: Record<string, Message[]>): Promise<void> => {
-    await AsyncStorage.setItem(STORAGE_KEYS.STANDALONE_MESSAGES, JSON.stringify(messages));
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.STANDALONE_MESSAGES, JSON.stringify(messages));
+    } catch (e) {
+      console.warn('StorageService.saveOfflineMessages error:', e);
+    }
   },
 
   getOfflineMessages: async (): Promise<Record<string, Message[]>> => {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.STANDALONE_MESSAGES);
-    if (!data) return {};
     try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.STANDALONE_MESSAGES);
+      if (!data) return {};
       return JSON.parse(data);
     } catch {
       return {};
@@ -99,6 +149,10 @@ export const StorageService = {
   },
 
   clearAll: async (): Promise<void> => {
-    await AsyncStorage.clear();
+    try {
+      await AsyncStorage.clear();
+    } catch (e) {
+      console.warn('StorageService.clearAll error:', e);
+    }
   }
 };
