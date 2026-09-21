@@ -1,26 +1,17 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
 export const GlassBackground: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <View style={styles.container}>
-      {/* Base Light Canvas */}
-      <LinearGradient
-        colors={['#F0F4F8', '#E6EEF8', '#F5F3FF', '#F0F9FF']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-
-      {/* Foggy / Glowing Ambient Glass Orbs */}
+      {/* Ambient Foggy Glass Light Orbs */}
       <View style={styles.orbTopRight} />
       <View style={styles.orbMiddleLeft} />
       <View style={styles.orbBottomRight} />
 
-      {/* Content */}
+      {/* Main App Content */}
       <View style={styles.content}>{children}</View>
     </View>
   );
@@ -29,36 +20,36 @@ export const GlassBackground: React.FC<{ children: React.ReactNode }> = ({ child
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC', // Slate 50 clean light background
   },
   content: {
     flex: 1,
   },
   orbTopRight: {
     position: 'absolute',
-    top: -60,
-    right: -60,
+    top: -40,
+    right: -40,
     width: width * 0.7,
     height: width * 0.7,
     borderRadius: (width * 0.7) / 2,
-    backgroundColor: 'rgba(56, 189, 248, 0.20)', // Sky aura
+    backgroundColor: 'rgba(56, 189, 248, 0.12)', // Sky blue aura
   },
   orbMiddleLeft: {
     position: 'absolute',
     top: height * 0.35,
-    left: -80,
+    left: -60,
     width: width * 0.75,
     height: width * 0.75,
     borderRadius: (width * 0.75) / 2,
-    backgroundColor: 'rgba(129, 140, 248, 0.18)', // Indigo aura
+    backgroundColor: 'rgba(129, 140, 248, 0.10)', // Indigo aura
   },
   orbBottomRight: {
     position: 'absolute',
-    bottom: -80,
+    bottom: -60,
     right: -40,
     width: width * 0.8,
     height: width * 0.8,
     borderRadius: (width * 0.8) / 2,
-    backgroundColor: 'rgba(52, 211, 153, 0.15)', // Emerald aura
+    backgroundColor: 'rgba(52, 211, 153, 0.10)', // Emerald aura
   },
 });

@@ -1,9 +1,26 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bot, Message, Routine, ServerEndpoint, ConnectionStatus } from '../types/models';
 import { OpenMausApiClient } from '../services/api';
 import { StorageService } from '../services/storage';
 import { triggerHaptic } from '../services/haptics';
-import { INITIAL_MOCK_BOTS, INITIAL_MOCK_MESSAGES, INITIAL_MOCK_ROUTINES } from './mockData';
+import { ProrootSandbox } from '../engine/ProrootSandbox';
+
+const DEFAULT_INITIAL_BOTS: Bot[] = [
+  {
+    id: 'bot_antigravity',
+    name: 'Antigravity Core',
+    provider: 'custom',
+    model: 'agy-v2.0',
+    color: '#2563EB',
+    status: 'idle',
+    unreadCount: 0,
+    hasPendingAction: false,
+    currentActivity: 'Ready',
+    systemPrompt: 'Autonomous Linux agent workstation with on-device sandbox and tool execution.',
+    lastActive: Date.now(),
+  },
+];
 
 interface OpenMausContextType {
   connectionStatus: ConnectionStatus;
@@ -36,55 +53,71 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('standalone');
   const [activeServer, setActiveServer] = useState<ServerEndpoint | null>(null);
   const [savedServers, setSavedServers] = useState<ServerEndpoint[]>([]);
-  const [bots, setBots] = useState<Bot[]>(INITIAL_MOCK_BOTS);
-  const [activeBotId, setActiveBotId] = useState<string>('bot_scout');
-  const [messagesMap, setMessagesMap] = useState<Record<string, Message[]>>(INITIAL_MOCK_MESSAGES);
-  const [routines, setRoutines] = useState<Routine[]>(INITIAL_MOCK_ROUTINES);
+  const [bots, setBots] = useState<Bot[]>(DEFAULT_INITIAL_BOTS);
+  const [activeBotId, setActiveBotId] = useState<string>('bot_antigravity');
+  const [messagesMap, setMessagesMap] = useState<Record<string, Message[]>>({});
+  const [routines, setRoutines] = useState<Routine[]>([]);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [apiClient, setApiClient] = useState<OpenMausApiClient | null>(null);
 
-  // Load persisted server and fallback data on startup
+  // Load persisted server, bots, and messages on startup
   useEffect(() => {
     (async () => {
-      const saved = await StorageService.getServersList();
-      setSavedServers(saved);
+      try {
+        const saved = await StorageService.getServersList();
+        setSavedServers(saved);
 
-      const current = await StorageService.getActiveServer();
-      if (current) {
-        const token = await StorageService.getDeviceToken(current.url);
-        if (token) {
-          const client = new OpenMausApiClient(current.url, token);
-          setApiClient(client);
-          setActiveServer(current);
-          setConnectionStatus('connecting');
+        const current = await StorageService.getActiveServer();
+        if (current && current.url) {
+          const token = await StorageService.getDeviceToken(current.url);
+          if (token) {
+            const client = new OpenMausApiClient(current.url, token);
+            setApiClient(client);
+            setActiveServer(current);
+            setConnectionStatus('connecting');
 
-          try {
-            const health = await client.checkHealth();
-            if (health.ok) {
-              setConnectionStatus('connected');
-              const remoteBots = await client.fetchBots();
-              if (remoteBots.length > 0) {
-                setBots(remoteBots);
-                setActiveBotId(remoteBots[0].id);
+            try {
+              const health = await client.checkHealth();
+              if (health.ok) {
+                setConnectionStatus('connected');
+                const remoteBots = await client.fetchBots();
+                if (remoteBots.length > 0) {
+                  setBots(remoteBots);
+                  setActiveBotId(remoteBots[0].id);
+                }
+              } else {
+                setConnectionStatus('disconnected');
               }
-            } else {
+            } catch {
               setConnectionStatus('disconnected');
             }
-          } catch {
-            setConnectionStatus('disconnected');
           }
         }
+
+        // Restore local persistent messages
+        const storedMessages = await AsyncStorage.getItem('@openmaus_messages');
+        if (storedMessages) {
+          setMessagesMap(JSON.parse(storedMessages));
+        }
+      } catch (err) {
+        console.warn('Error loading persisted context:', err);
       }
     })();
   }, []);
 
-  // Listen to SSE events when connected
+  // Persist messages whenever they change
+  useEffect(() => {
+    if (Object.keys(messagesMap).length > 0) {
+      AsyncStorage.setItem('@openmaus_messages', JSON.stringify(messagesMap)).catch(() => {});
+    }
+  }, [messagesMap]);
+
+  // Listen to SSE events when connected to companion server
   useEffect(() => {
     if (connectionStatus === 'connected' && apiClient) {
       const unsubscribe = apiClient.subscribeToEvents(
         (event) => {
           if (event.type === 'message' || event.type === 'token') {
-            // handle streaming token or incoming message
             if (event.botId) {
               setMessagesMap((prev) => {
                 const currentList = prev[event.botId] || [];
@@ -110,7 +143,7 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [connectionStatus, apiClient]);
 
-  // Count attention cards across all messages
+  // Count pending attention cards
   const attentionItemsCount = Object.values(messagesMap).reduce((count, msgs) => {
     const pendingInBot = msgs.filter((m) => m.optionCard && !m.optionCard.answered && !m.optionCard.dismissed);
     return count + pendingInBot.length;
@@ -162,7 +195,6 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setConnectionStatus('connected');
       triggerHaptic.success();
 
-      // Fetch initial remote fleet
       const remoteBots = await client.fetchBots();
       if (remoteBots.length > 0) {
         setBots(remoteBots);
@@ -245,13 +277,12 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setBots((prev) => [...prev, newBot]);
       setActiveBotId(newBot.id);
     } else {
-      // Local standalone bot creation
       const localBot: Bot = {
         id: `bot_${Date.now()}`,
         name,
         provider: provider as any,
         model,
-        color: '#A855F7',
+        color: '#2563EB',
         status: 'idle',
         systemPrompt: prompt || 'You are an autonomous agent in OpenMausBot.',
         lastActive: Date.now(),
@@ -260,19 +291,6 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       };
       setBots((prev) => [...prev, localBot]);
       setActiveBotId(localBot.id);
-      setMessagesMap((prev) => ({
-        ...prev,
-        [localBot.id]: [
-          {
-            id: `msg_${Date.now()}`,
-            botId: localBot.id,
-            threadId: 'main',
-            role: 'assistant',
-            content: `Agent **${name}** is online and ready with model \`${model}\`.`,
-            createdAt: Date.now(),
-          }
-        ]
-      }));
     }
     triggerHaptic.success();
   };
@@ -305,32 +323,54 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsGenerating(false);
       }
     } else {
-      // Standalone simulator response
+      // Standalone mode: execute in on-device Linux sandbox
       setIsGenerating(true);
-      setTimeout(() => {
+      try {
+        let output = '';
+        const isCommand = text.startsWith('!') || text.startsWith('agy') || text.startsWith('ls') || text.startsWith('uname') || text.startsWith('cat');
+        const cmdToRun = isCommand ? text.replace(/^!\s*/, '') : `agy -p "${text.replace(/"/g, '\\"')}"`;
+
+        output = await ProrootSandbox.runLinuxCommand(cmdToRun);
+
         const replyMsg: Message = {
           id: `asst_${Date.now()}`,
           botId: activeBotId,
           threadId: 'main',
           role: 'assistant',
-          content: `I processed your request: "${text}".\n\nAll tools and local environment checks are nominal.`,
+          content: `<thought>Executed task in on-device proroot Linux sandbox.</thought>\n\n${output || 'Command completed with exit status 0.'}`,
           createdAt: Date.now(),
           toolActivities: [
             {
-              name: 'sandbox::execute',
+              name: cmdToRun.slice(0, 40),
               ok: true,
-              spoken: 'Executed sandbox task successfully',
+              spoken: 'Executed command in sandbox',
               timestamp: Date.now(),
             }
           ]
         };
+
         setMessagesMap((prev) => ({
           ...prev,
           [activeBotId]: [...(prev[activeBotId] || []), replyMsg],
         }));
-        setIsGenerating(false);
         triggerHaptic.success();
-      }, 1200);
+      } catch (err: any) {
+        const errorReply: Message = {
+          id: `asst_${Date.now()}`,
+          botId: activeBotId,
+          threadId: 'main',
+          role: 'assistant',
+          content: `Error executing command: ${err.message || 'Unknown error'}`,
+          createdAt: Date.now(),
+        };
+        setMessagesMap((prev) => ({
+          ...prev,
+          [activeBotId]: [...(prev[activeBotId] || []), errorReply],
+        }));
+        triggerHaptic.error();
+      } finally {
+        setIsGenerating(false);
+      }
     }
   };
 
@@ -338,7 +378,6 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     triggerHaptic.medium();
     const behavior = choice.toLowerCase() === 'deny' ? 'deny' : 'allow';
 
-    // Mark card locally
     setMessagesMap((prev) => {
       const list = prev[activeBotId] || [];
       const updated = list.map((m) => {
@@ -348,7 +387,6 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             optionCard: {
               ...m.optionCard,
               answered: choice,
-              answeredText: choice,
             },
           };
         }
@@ -357,32 +395,30 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return { ...prev, [activeBotId]: updated };
     });
 
-    if (choice.toLowerCase().includes('always allow') && allowKey && apiClient && connectionStatus === 'connected') {
-      await apiClient.alwaysAllowPermission(activeBotId, allowKey);
-    }
-
     if (apiClient && connectionStatus === 'connected') {
       try {
         await apiClient.respondToCard(activeBotId, requestId, choice, behavior);
         triggerHaptic.success();
-      } catch {
+      } catch (e) {
+        console.warn('Failed to submit card response', e);
         triggerHaptic.error();
       }
-    } else {
-      triggerHaptic.success();
     }
   };
 
   const interruptActiveTurn = async () => {
-    triggerHaptic.heavy();
-    setIsGenerating(false);
+    triggerHaptic.warning();
     if (apiClient && connectionStatus === 'connected') {
-      await apiClient.interrupt(activeBotId);
+      try {
+        await apiClient.interrupt(activeBotId);
+      } catch (e) {
+        console.warn('Failed to interrupt turn', e);
+      }
     }
+    setIsGenerating(false);
   };
 
   const toggleRoutine = (routineId: string) => {
-    triggerHaptic.light();
     setRoutines((prev) =>
       prev.map((r) => (r.id === routineId ? { ...r, enabled: !r.enabled } : r))
     );
@@ -390,20 +426,13 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const runRoutine = async (routineId: string) => {
     triggerHaptic.medium();
-    setRoutines((prev) =>
-      prev.map((r) => (r.id === routineId ? { ...r, status: 'running' } : r))
-    );
+    const routine = routines.find((r) => r.id === routineId);
+    if (!routine) return;
 
-    setTimeout(() => {
-      setRoutines((prev) =>
-        prev.map((r) =>
-          r.id === routineId
-            ? { ...r, status: 'success', lastRun: Date.now() }
-            : r
-        )
-      );
-      triggerHaptic.success();
-    }, 1500);
+    setRoutines((prev) =>
+      prev.map((r) => (r.id === routineId ? { ...r, lastRun: Date.now() } : r))
+    );
+    triggerHaptic.success();
   };
 
   return (
