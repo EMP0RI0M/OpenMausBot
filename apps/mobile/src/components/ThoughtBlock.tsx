@@ -24,17 +24,17 @@ export const ThoughtBlock: React.FC<ThoughtBlockProps> = ({ thought, isStreaming
     setIsExpanded(!isExpanded);
   };
 
-  const previewText = thought.trim().split('\n')[0].slice(0, 65);
+  const previewText = thought.trim().split('\n')[0].slice(0, 60);
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
         onPress={toggleExpand}
         activeOpacity={0.7}
-        style={[styles.header, isExpanded && styles.headerExpanded]}
+        style={[styles.headerPill, isExpanded && styles.headerPillExpanded]}
       >
         <View style={styles.headerLeft}>
-          <Sparkles size={14} color={Colors.primary} />
+          <Sparkles size={13} color={Colors.primary} />
           <Text style={styles.title}>
             {isStreaming ? 'Thinking...' : 'Reasoning Process'}
           </Text>
@@ -48,14 +48,13 @@ export const ThoughtBlock: React.FC<ThoughtBlockProps> = ({ thought, isStreaming
         <View style={styles.headerRight}>
           {isStreaming && (
             <View style={styles.liveIndicator}>
-              <Sparkles size={11} color={Colors.primary} />
               <Text style={styles.liveText}>Live</Text>
             </View>
           )}
           {isExpanded ? (
-            <ChevronUp size={14} color={Colors.textMuted} />
+            <ChevronUp size={13} color={Colors.textMuted} />
           ) : (
-            <ChevronDown size={14} color={Colors.textMuted} />
+            <ChevronDown size={13} color={Colors.textMuted} />
           )}
         </View>
       </TouchableOpacity>
@@ -73,24 +72,27 @@ export const ThoughtBlock: React.FC<ThoughtBlockProps> = ({ thought, isStreaming
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 6,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    marginVertical: 5,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.70)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(15, 23, 42, 0.07)',
     overflow: 'hidden',
   },
-  header: {
+  headerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 9,
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    paddingVertical: 8,
+    backgroundColor: 'rgba(241, 245, 249, 0.60)',
+    borderRadius: 18,
   },
-  headerExpanded: {
+  headerPillExpanded: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.05)',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -103,7 +105,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: Colors.textSecondary,
-    letterSpacing: 0.2,
   },
   preview: {
     fontSize: 11,
@@ -117,22 +118,20 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   liveIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    backgroundColor: 'rgba(37, 99, 235, 0.10)',
     paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingVertical: 1.5,
+    borderRadius: 10,
   },
   liveText: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 9,
+    fontWeight: '700',
     color: Colors.primary,
+    textTransform: 'uppercase',
   },
   contentContainer: {
     padding: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: '#F8FAFC',
   },
   contentText: {
     fontSize: 12,

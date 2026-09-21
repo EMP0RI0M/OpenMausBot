@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Keyboard } from 'react-native';
-import { Send, Square, Mic, MicOff, Plus, Terminal } from 'lucide-react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { Send, Square, Mic, MicOff } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { triggerHaptic } from '../services/haptics';
 
@@ -8,7 +8,6 @@ interface ChatInputProps {
   onSendMessage: (text: string) => void;
   isGenerating?: boolean;
   onInterrupt?: () => void;
-  onQuickCommand?: (cmd: string) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -43,8 +42,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <View style={styles.outerContainer}>
-      <View style={[styles.inputContainer, isFocused && styles.inputContainerFocused]}>
-        {/* Voice dictation button */}
+      <View style={[styles.inputPill, isFocused && styles.inputPillFocused]}>
+        {/* Voice Dictation Button */}
         <TouchableOpacity
           style={styles.leadingButton}
           onPress={handleMicToggle}
@@ -61,7 +60,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         {/* Text Input */}
         <TextInput
           style={styles.textInput}
-          placeholder={isRecording ? 'Listening...' : 'Ask agent or run linux command...'}
+          placeholder={isRecording ? 'Listening...' : 'Message agent or run linux command...'}
           placeholderTextColor={isRecording ? Colors.error : Colors.textMuted}
           value={text}
           onChangeText={setText}
@@ -101,25 +100,32 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
 const styles = StyleSheet.create({
   outerContainer: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: Platform.OS === 'ios' ? 14 : 10,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
   },
-  inputContainer: {
+  inputPill: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: '#10121A',
-    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    minHeight: 44,
+    borderColor: 'rgba(15, 23, 42, 0.09)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    minHeight: 46,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  inputContainerFocused: {
-    borderColor: 'rgba(56, 189, 248, 0.4)',
-    backgroundColor: '#121520',
+  inputPillFocused: {
+    borderColor: Colors.primary,
+    backgroundColor: '#FFFFFF',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   leadingButton: {
     width: 34,
@@ -139,10 +145,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   sendButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(15, 23, 42, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 4,
@@ -151,9 +157,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   stopButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: Colors.error,
     alignItems: 'center',
     justifyContent: 'center',

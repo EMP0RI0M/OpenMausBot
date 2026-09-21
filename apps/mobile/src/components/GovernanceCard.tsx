@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { ShieldCheck, ShieldAlert, Check, X, Terminal } from 'lucide-react-native';
+import { ShieldAlert, Terminal } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { triggerHaptic } from '../services/haptics';
 
@@ -56,10 +56,10 @@ export const GovernanceCard: React.FC<GovernanceCardProps> = ({
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.iconBadge}>
-          <ShieldAlert size={16} color={Colors.warning || '#f59e0b'} />
+          <ShieldAlert size={16} color={Colors.warning} />
         </View>
         <View style={styles.headerTextWrap}>
-          <Text style={styles.cardTitle}>{title || 'Action Approval Required'}</Text>
+          <Text style={styles.cardTitle}>{title || 'Approval Required'}</Text>
           {toolName && <Text style={styles.toolBadge}>{toolName}</Text>}
         </View>
       </View>
@@ -85,17 +85,17 @@ export const GovernanceCard: React.FC<GovernanceCardProps> = ({
             <TouchableOpacity
               key={act.id}
               style={[
-                styles.actionBtn,
-                isPrimary && styles.actionBtnPrimary,
-                isDanger && styles.actionBtnDanger,
-                (disabled || pendingAction) && styles.actionBtnDisabled,
+                styles.actionPill,
+                isPrimary && styles.actionPillPrimary,
+                isDanger && styles.actionPillDanger,
+                (disabled || pendingAction) && styles.actionPillDisabled,
               ]}
               onPress={() => handlePress(act.id)}
               disabled={disabled || !!pendingAction}
               activeOpacity={0.7}
             >
               {isPending ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color={isPrimary ? '#FFFFFF' : Colors.text} />
               ) : (
                 <Text
                   style={[
@@ -117,12 +117,17 @@ export const GovernanceCard: React.FC<GovernanceCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    marginVertical: 10,
-    backgroundColor: '#161922',
-    borderRadius: 12,
+    marginVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderColor: 'rgba(217, 119, 6, 0.25)',
     padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
   header: {
     flexDirection: 'row',
@@ -133,8 +138,8 @@ const styles = StyleSheet.create({
   iconBadge: {
     width: 32,
     height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderRadius: 16,
+    backgroundColor: 'rgba(217, 119, 6, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -147,16 +152,16 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: Colors.text,
   },
   toolBadge: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#f59e0b',
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    paddingHorizontal: 6,
+    fontWeight: '700',
+    color: Colors.warning,
+    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+    paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 10,
     textTransform: 'uppercase',
   },
   description: {
@@ -169,55 +174,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#0a0c10',
+    backgroundColor: '#F1F5F9',
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(15, 23, 42, 0.06)',
     marginBottom: 12,
   },
   commandText: {
     fontSize: 12,
     fontFamily: 'monospace',
-    color: '#38bdf8',
+    color: Colors.primary,
     flex: 1,
   },
   actionsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 4,
+    marginTop: 2,
   },
-  actionBtn: {
+  actionPill: {
     flex: 1,
     paddingVertical: 9,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 18,
+    backgroundColor: 'rgba(15, 23, 42, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
-  actionBtnPrimary: {
-    backgroundColor: Colors.primary || '#6366f1',
-    borderColor: Colors.primary || '#6366f1',
+  actionPillPrimary: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
-  actionBtnDanger: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderColor: 'rgba(239, 68, 68, 0.4)',
+  actionPillDanger: {
+    backgroundColor: 'rgba(220, 38, 38, 0.10)',
+    borderColor: 'rgba(220, 38, 38, 0.25)',
   },
-  actionBtnDisabled: {
+  actionPillDisabled: {
     opacity: 0.5,
   },
   actionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: Colors.text,
   },
   actionLabelPrimary: {
-    color: '#ffffff',
+    color: '#FFFFFF',
   },
   actionLabelDanger: {
-    color: '#ef4444',
+    color: Colors.error,
   },
 });

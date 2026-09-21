@@ -18,15 +18,15 @@ export const ToolActivityBadge: React.FC<ToolActivityBadgeProps> = ({ activity }
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.7}
       >
-        <Terminal size={14} color={Colors.primary} style={styles.icon} />
+        <Terminal size={12} color={Colors.primary} style={styles.icon} />
         <Text style={styles.titleText} numberOfLines={1}>
           {activity.name}
         </Text>
         {activity.ok !== undefined && (
           activity.ok ? (
-            <CheckCircle2 size={13} color={Colors.accent} style={styles.statusIcon} />
+            <CheckCircle2 size={12} color={Colors.accent} style={styles.statusIcon} />
           ) : (
-            <XCircle size={13} color={Colors.error} style={styles.statusIcon} />
+            <XCircle size={12} color={Colors.error} style={styles.statusIcon} />
           )
         )}
         {activity.spoken && (
@@ -49,17 +49,17 @@ export const ToolActivityBadge: React.FC<ToolActivityBadgeProps> = ({ activity }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.codeBg,
-    borderColor: Colors.surfaceBorder,
+    backgroundColor: 'rgba(241, 245, 249, 0.70)',
+    borderColor: 'rgba(15, 23, 42, 0.06)',
     borderWidth: 1,
-    borderRadius: 8,
-    marginVertical: 3,
+    borderRadius: 14,
+    marginVertical: 2,
     overflow: 'hidden',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 5,
     paddingHorizontal: 10,
   },
   icon: {
@@ -68,8 +68,9 @@ const styles = StyleSheet.create({
   titleText: {
     flex: 1,
     fontFamily: 'monospace',
-    fontSize: 12,
+    fontSize: 11,
     color: Colors.textSecondary,
+    fontWeight: '500',
   },
   statusIcon: {
     marginLeft: 6,
@@ -77,14 +78,13 @@ const styles = StyleSheet.create({
   },
   detailContainer: {
     paddingHorizontal: 10,
-    paddingBottom: 8,
+    paddingBottom: 6,
     paddingTop: 2,
     borderTopWidth: 1,
-    borderTopColor: Colors.codeBorder,
+    borderTopColor: 'rgba(15, 23, 42, 0.05)',
   },
   detailText: {
     fontSize: 11,
     color: Colors.textMuted,
-    fontStyle: 'italic',
   },
 });

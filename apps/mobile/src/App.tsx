@@ -24,7 +24,7 @@ const MainNavigator: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.container}>
         {/* Main View Area */}
@@ -57,58 +57,60 @@ const MainNavigator: React.FC = () => {
           )}
         </View>
 
-        {/* Streamlined Floating Bottom Navigation */}
-        <View style={styles.bottomBar}>
-          <TouchableOpacity
-            style={[styles.tabItem, activeTab === 'chat' && styles.tabItemActive]}
-            onPress={() => handleTabPress('chat')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.tabIconWrap}>
-              <MessageSquare
-                size={19}
-                color={activeTab === 'chat' ? Colors.primary : Colors.textMuted}
-              />
-              {attentionItemsCount > 0 && (
-                <View style={styles.badgeDot} />
-              )}
-            </View>
-            <Text style={[styles.tabLabel, activeTab === 'chat' && styles.tabLabelActive]}>
-              Chat
-            </Text>
-          </TouchableOpacity>
+        {/* Floating Light Glass Pill Bottom Navigation */}
+        <View style={styles.bottomBarContainer}>
+          <View style={styles.bottomBarPill}>
+            <TouchableOpacity
+              style={[styles.tabItem, activeTab === 'chat' && styles.tabItemActive]}
+              onPress={() => handleTabPress('chat')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tabIconWrap}>
+                <MessageSquare
+                  size={18}
+                  color={activeTab === 'chat' ? Colors.primary : Colors.textMuted}
+                />
+                {attentionItemsCount > 0 && (
+                  <View style={styles.badgeDot} />
+                )}
+              </View>
+              <Text style={[styles.tabLabel, activeTab === 'chat' && styles.tabLabelActive]}>
+                Chat
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.tabItem, activeTab === 'bots' && styles.tabItemActive]}
-            onPress={() => handleTabPress('bots')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.tabIconWrap}>
-              <Users
-                size={19}
-                color={activeTab === 'bots' ? Colors.primary : Colors.textMuted}
-              />
-            </View>
-            <Text style={[styles.tabLabel, activeTab === 'bots' && styles.tabLabelActive]}>
-              Fleet ({bots.length})
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabItem, activeTab === 'bots' && styles.tabItemActive]}
+              onPress={() => handleTabPress('bots')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tabIconWrap}>
+                <Users
+                  size={18}
+                  color={activeTab === 'bots' ? Colors.primary : Colors.textMuted}
+                />
+              </View>
+              <Text style={[styles.tabLabel, activeTab === 'bots' && styles.tabLabelActive]}>
+                Fleet ({bots.length})
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.tabItem, activeTab === 'console' && styles.tabItemActive]}
-            onPress={() => handleTabPress('console')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.tabIconWrap}>
-              <Terminal
-                size={19}
-                color={activeTab === 'console' ? Colors.primary : Colors.textMuted}
-              />
-            </View>
-            <Text style={[styles.tabLabel, activeTab === 'console' && styles.tabLabelActive]}>
-              Sandbox
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabItem, activeTab === 'console' && styles.tabItemActive]}
+              onPress={() => handleTabPress('console')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tabIconWrap}>
+                <Terminal
+                  size={18}
+                  color={activeTab === 'console' ? Colors.primary : Colors.textMuted}
+                />
+              </View>
+              <Text style={[styles.tabLabel, activeTab === 'console' && styles.tabLabelActive]}>
+                Sandbox
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -128,30 +130,45 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   screenContainer: {
     flex: 1,
   },
-  bottomBar: {
+  bottomBarContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 14 : 10,
+    paddingTop: 4,
+    backgroundColor: 'transparent',
+  },
+  bottomBarPill: {
     flexDirection: 'row',
-    backgroundColor: '#090B10',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.05)',
-    paddingVertical: 8,
-    paddingBottom: Platform.OS === 'ios' ? 14 : 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: 30,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 3,
+    borderRadius: 20,
   },
-  tabItemActive: {},
+  tabItemActive: {
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+  },
   tabIconWrap: {
     position: 'relative',
   },
@@ -159,11 +176,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textMuted,
     fontWeight: '500',
-    marginTop: 3,
+    marginTop: 2,
   },
   tabLabelActive: {
     color: Colors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   badgeDot: {
     position: 'absolute',

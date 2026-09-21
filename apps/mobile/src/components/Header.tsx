@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Settings, Sparkles, Terminal, ChevronDown } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Settings, ChevronDown } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
 import { BotAvatar } from './BotAvatar';
@@ -51,26 +51,26 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBots, onOpenSettings, onOp
             <Text style={styles.agentName} numberOfLines={1}>
               {activeBot?.name || 'Antigravity'}
             </Text>
-            <ChevronDown size={12} color={Colors.textMuted} style={{ marginLeft: 2 }} />
+            <ChevronDown size={12} color={Colors.textMuted} style={{ marginLeft: 3 }} />
           </View>
           <Text style={styles.modelTag} numberOfLines={1}>
-            {isGenerating ? 'Generating response…' : (activeBot?.model || 'Autonomous Linux Agent')}
+            {isGenerating ? 'Thinking…' : (activeBot?.model || 'Autonomous Linux Agent')}
           </Text>
         </View>
       </TouchableOpacity>
 
-      {/* Right Minimal Controls */}
+      {/* Right Controls */}
       <View style={styles.rightGroup}>
-        {/* Status chip */}
+        {/* Status pill */}
         <TouchableOpacity
-          style={styles.connectionChip}
+          style={styles.connectionPill}
           onPress={handlePairingPress}
           activeOpacity={0.7}
         >
           <View
             style={[
               styles.statusDot,
-              { backgroundColor: isConnected ? Colors.accent : '#64748b' },
+              { backgroundColor: isConnected ? Colors.accent : '#94A3B8' },
             ]}
           />
           <Text style={styles.statusText}>
@@ -96,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBots, onOpenSettings, onOp
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Settings size={18} color={Colors.textSecondary} />
+          <Settings size={17} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -110,19 +110,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: Colors.background,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.06)',
   },
   agentPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(255, 255, 255, 0.90)',
     paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 20,
+    paddingHorizontal: 10,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
     maxWidth: '58%',
   },
   agentInfo: {
@@ -136,7 +141,7 @@ const styles = StyleSheet.create({
   agentName: {
     color: Colors.text,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   modelTag: {
@@ -149,15 +154,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  connectionChip: {
+  connectionPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     gap: 5,
   },
   statusDot: {
@@ -168,27 +173,29 @@ const styles = StyleSheet.create({
   statusText: {
     color: Colors.textSecondary,
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   attentionPill: {
     backgroundColor: Colors.warning,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
   attentionText: {
-    color: '#000',
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '700',
   },
   iconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
 });

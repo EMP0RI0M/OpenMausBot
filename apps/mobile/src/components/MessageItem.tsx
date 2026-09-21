@@ -75,7 +75,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
         }
 
         return (
-          <View key={index} style={styles.codeBlockContainer}>
+          <View key={index} style={styles.codePillContainer}>
             {langOrPath ? (
               <View style={styles.codeHeader}>
                 <Text style={styles.codeLang}>{langOrPath}</Text>
@@ -155,7 +155,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
 
         {/* Footer info: time, copy, voice */}
         <View style={styles.footerRow}>
-          <Text style={styles.timestamp}>{formattedTime}</Text>
+          <Text style={[styles.timestamp, isUser && styles.userTimestamp]}>{formattedTime}</Text>
 
           {!isUser && (
             <View style={styles.actionButtons}>
@@ -205,16 +205,19 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   bubble: {
-    maxWidth: '92%',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    maxWidth: '90%',
   },
   userBubble: {
-    backgroundColor: '#1E2438',
-    borderBottomRightRadius: 3,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: Colors.userBubble,
+    borderRadius: 20,
+    borderBottomRightRadius: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   botBubble: {
     backgroundColor: 'transparent',
@@ -225,7 +228,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   bodyText: {
-    color: '#E2E8F0',
+    color: Colors.text,
     fontSize: 14,
     lineHeight: 22,
     letterSpacing: -0.1,
@@ -233,28 +236,28 @@ const styles = StyleSheet.create({
   userBodyText: {
     color: '#FFFFFF',
   },
-  codeBlockContainer: {
-    backgroundColor: '#0A0C12',
-    borderRadius: 8,
-    padding: 10,
+  codePillContainer: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 16,
+    padding: 12,
     marginVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   codeHeader: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.06)',
     paddingBottom: 4,
     marginBottom: 6,
   },
   codeLang: {
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
     textTransform: 'uppercase',
   },
   codeText: {
-    color: '#38BDF8',
+    color: '#0F172A',
     fontFamily: 'monospace',
     fontSize: 12,
     lineHeight: 18,
@@ -272,6 +275,9 @@ const styles = StyleSheet.create({
   timestamp: {
     color: Colors.textMuted,
     fontSize: 10,
+  },
+  userTimestamp: {
+    color: 'rgba(255, 255, 255, 0.75)',
   },
   actionButtons: {
     flexDirection: 'row',

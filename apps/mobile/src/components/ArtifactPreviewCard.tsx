@@ -39,7 +39,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
           }}
           activeOpacity={0.7}
         >
-          <Terminal size={15} color={Colors.primary} />
+          <Terminal size={14} color={Colors.primary} />
           <Text style={styles.fileName} numberOfLines={1}>
             {fileName}
           </Text>
@@ -50,7 +50,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
 
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={handleCopy} style={styles.iconBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            {copied ? <Check size={13} color="#22c55e" /> : <Copy size={13} color={Colors.textMuted} />}
+            {copied ? <Check size={13} color={Colors.accent} /> : <Copy size={13} color={Colors.textMuted} />}
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
@@ -59,7 +59,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
             }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            {isExpanded ? <ChevronUp size={15} color={Colors.textMuted} /> : <ChevronDown size={15} color={Colors.textMuted} />}
+            {isExpanded ? <ChevronUp size={14} color={Colors.textMuted} /> : <ChevronDown size={14} color={Colors.textMuted} />}
           </TouchableOpacity>
         </View>
       </View>
@@ -77,20 +77,21 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 6,
-    backgroundColor: '#0d1117',
-    borderRadius: 8,
+    marginVertical: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'rgba(241, 245, 249, 0.70)',
+    borderRadius: 16,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -106,20 +107,20 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   badge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 1.5,
+    borderRadius: 10,
   },
   badgeCreate: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    backgroundColor: 'rgba(5, 150, 105, 0.12)',
   },
   badgeEdit: {
-    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    backgroundColor: 'rgba(37, 99, 235, 0.10)',
   },
   badgeText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: Colors.textSecondary,
+    fontWeight: '700',
+    color: Colors.primary,
     textTransform: 'uppercase',
   },
   headerRight: {
@@ -131,15 +132,15 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   contentBox: {
-    padding: 10,
+    padding: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.06)',
-    backgroundColor: '#07090d',
+    borderTopColor: 'rgba(15, 23, 42, 0.06)',
+    backgroundColor: '#F8FAFC',
   },
   codeText: {
     fontSize: 11,
     fontFamily: 'monospace',
-    color: '#e6edf3',
-    lineHeight: 16,
+    color: '#0F172A',
+    lineHeight: 17,
   },
 });

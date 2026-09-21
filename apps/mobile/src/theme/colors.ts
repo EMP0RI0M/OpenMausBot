@@ -1,39 +1,49 @@
 export const Colors = {
-  background: '#07080B',
-  surface: '#0E1017',
-  surfaceLight: '#141824',
-  surfaceBorder: 'rgba(255, 255, 255, 0.07)',
-  surfaceHover: 'rgba(255, 255, 255, 0.10)',
+  background: '#F8FAFC', // Slate 50 clean light background
+  surface: 'rgba(255, 255, 255, 0.85)', // Frosted glass white
+  surfaceLight: 'rgba(241, 245, 249, 0.90)',
+  surfaceBorder: 'rgba(15, 23, 42, 0.08)',
+  surfaceHover: 'rgba(15, 23, 42, 0.04)',
 
-  primary: '#38BDF8', // Sky 400
-  primaryHover: '#0EA5E9',
-  primaryGlow: 'rgba(56, 189, 248, 0.15)',
+  glass: 'rgba(255, 255, 255, 0.65)',
+  glassBorder: 'rgba(15, 23, 42, 0.07)',
+  glassGlow: 'rgba(37, 99, 235, 0.08)',
 
-  secondary: '#818CF8', // Indigo 400
-  secondaryGlow: 'rgba(129, 140, 248, 0.15)',
+  primary: '#2563EB', // Blue 600
+  primaryHover: '#1D4ED8',
+  primaryGlow: 'rgba(37, 99, 235, 0.12)',
 
-  accent: '#34D399', // Emerald 400
-  accentGlow: 'rgba(52, 211, 153, 0.15)',
+  secondary: '#7C3AED', // Violet 600
+  secondaryGlow: 'rgba(124, 58, 237, 0.12)',
 
-  warning: '#FBBF24',
-  warningGlow: 'rgba(251, 191, 36, 0.15)',
+  accent: '#059669', // Emerald 600
+  accentGlow: 'rgba(5, 150, 105, 0.12)',
 
-  error: '#F87171',
-  errorGlow: 'rgba(248, 113, 113, 0.15)',
+  warning: '#D97706', // Amber 600
+  warningGlow: 'rgba(217, 119, 6, 0.12)',
 
-  text: '#F1F5F9',
-  textSecondary: '#94A3B8',
-  textMuted: '#64748B',
+  error: '#DC2626', // Red 600
+  errorGlow: 'rgba(220, 38, 38, 0.12)',
 
-  codeBg: '#0A0C12',
-  codeBorder: 'rgba(255, 255, 255, 0.06)',
+  text: '#0F172A', // Slate 900
+  textSecondary: '#475569', // Slate 600
+  textMuted: '#94A3B8', // Slate 400
+
+  codeBg: '#F1F5F9', // Slate 100
+  codeBorder: 'rgba(15, 23, 42, 0.08)',
+
+  userBubble: '#2563EB',
+  userBubbleText: '#FFFFFF',
+
+  botBubble: 'rgba(255, 255, 255, 0.90)',
+  botBubbleBorder: 'rgba(15, 23, 42, 0.06)',
 
   badge: {
-    claude: '#F59E0B',
-    grok: '#F43F5E',
-    codex: '#10B981',
-    openai: '#059669',
-    ollama: '#8B5CF6',
-    custom: '#38BDF8',
+    claude: '#D97706',
+    grok: '#E11D48',
+    codex: '#059669',
+    openai: '#0284C7',
+    ollama: '#7C3AED',
+    custom: '#2563EB',
   }
 };
