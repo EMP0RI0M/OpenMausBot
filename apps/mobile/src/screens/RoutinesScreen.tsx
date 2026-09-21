@@ -1,30 +1,50 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Switch } from 'react-native';
-import { Play, Clock, ArrowLeft, RefreshCw } from 'lucide-react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Switch, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Play, Clock, ArrowLeft, RefreshCw, Sparkles } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
+import { triggerHaptic } from '../services/haptics';
 
 interface RoutinesScreenProps {
   onClose: () => void;
 }
 
 export const RoutinesScreen: React.FC<RoutinesScreenProps> = ({ onClose }) => {
+  const insets = useSafeAreaInsets();
   const { routines, toggleRoutine, runRoutine, bots } = useOpenMaus();
 
+  const topOffset = Math.max(insets.top, Platform.OS === 'android' ? 24 : 12) + 6;
+
+  const handleRun = (id: string) => {
+    triggerHaptic.medium();
+    runRoutine(id);
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={onClose} activeOpacity={0.7}>
-          <ArrowLeft size={20} color={Colors.text} />
+    <View style={[styles.container, { paddingTop: topOffset }]}>
+      {/* Header Pill */}
+      <View style={styles.headerPill}>
+        <TouchableOpacity style={styles.backPill} onPress={onClose} activeOpacity={0.7}>
+          <ArrowLeft size={17} color="#000000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Routines & Automations</Text>
-        <View style={{ width: 36 }} />
+        <Text style={styles.headerTitle}>Routines & Scheduled Tasks</Text>
+        <View style={{ width: 32 }} />
       </View>
 
       <FlatList
         data={routines}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyCard}>
+            <Clock size={32} color={Colors.primary} style={{ marginBottom: 8 }} />
+            <Text style={styles.emptyTitle}>No scheduled routines</Text>
+            <Text style={styles.emptySubtitle}>
+              Create recurring automated cron tasks for your agents to execute in the background.
+            </Text>
+          </View>
+        }
         renderItem={({ item }) => {
           const assignedBot = bots.find((b) => b.id === item.botId);
           const lastRunText = item.lastRun
@@ -35,48 +55,45 @@ export const RoutinesScreen: React.FC<RoutinesScreenProps> = ({ onClose }) => {
             <View style={styles.routineCard}>
               <View style={styles.cardHeader}>
                 <View style={styles.routineTitleWrap}>
-                  <Clock size={16} color={Colors.primary} style={{ marginRight: 8 }} />
+                  <View style={styles.clockBadge}>
+                    <Clock size={16} color={Colors.primary} />
+                  </View>
                   <Text style={styles.routineTitle}>{item.title}</Text>
                 </View>
                 <Switch
                   value={item.enabled}
-                  onValueChange={() => toggleRoutine(item.id)}
-                  trackColor={{ false: Colors.surfaceBorder, true: Colors.primary }}
-                  thumbColor={item.enabled ? '#000' : '#888'}
+                  onValueChange={() => {
+                    triggerHaptic.light();
+                    toggleRoutine(item.id);
+                  }}
+                  trackColor={{ false: '#E2E8F0', true: Colors.primary }}
+                  thumbColor="#FFFFFF"
                 />
               </View>
 
               <View style={styles.cronRow}>
-                <View style={styles.cronBadge}>
+                <View style={styles.cronPill}>
                   <Text style={styles.cronText}>{item.cron}</Text>
                 </View>
                 {assignedBot && (
-                  <Text style={styles.botAssignee}>Assigned: {assignedBot.name}</Text>
+                  <Text style={styles.botAssignee}>Agent: {assignedBot.name}</Text>
                 )}
               </View>
 
               <View style={styles.cardFooter}>
-                <Text style={styles.lastRunText}>Last run: {lastRunText}</Text>
+                <Text style={styles.lastRunText}>Last execution: {lastRunText}</Text>
                 <TouchableOpacity
-                  style={[styles.runNowBtn, item.status === 'running' && styles.runNowBtnActive]}
-                  onPress={() => runRoutine(item.id)}
-                  disabled={item.status === 'running'}
-                  activeOpacity={0.7}
+                  style={styles.runPill}
+                  onPress={() => handleRun(item.id)}
+                  activeOpacity={0.8}
                 >
-                  {item.status === 'running' ? (
-                    <RefreshCw size={13} color="#FFF" style={{ marginRight: 4 }} />
-                  ) : (
-                    <Play size={13} color="#000" fill="#000" style={{ marginRight: 4 }} />
-                  )}
-                  <Text style={[styles.runNowText, item.status === 'running' && { color: '#FFF' }]}>
-                    {item.status === 'running' ? 'Running' : 'Run Now'}
-                  </Text>
+                  <Play size={11} color="#FFFFFF" fill="#FFFFFF" style={{ marginRight: 4 }} />
+                  <Text style={styles.runPillText}>Trigger Now</Text>
                 </TouchableOpacity>
               </View>
             </View>
           );
         }}
-        contentContainerStyle={styles.listContent}
       />
     </View>
   );
@@ -85,36 +102,62 @@ export const RoutinesScreen: React.FC<RoutinesScreenProps> = ({ onClose }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
   },
-  header: {
+  headerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    borderRadius: 30,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+    marginBottom: 12,
   },
-  backBtn: {
-    padding: 6,
+  backPill: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.70)',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
-  title: {
-    color: Colors.text,
-    fontSize: 17,
+  headerTitle: {
+    color: '#000000',
+    fontSize: 14,
     fontWeight: '700',
   },
   listContent: {
-    padding: 16,
+    paddingBottom: 24,
+    gap: 10,
   },
   routineCard: {
-    backgroundColor: Colors.surface,
-    borderColor: Colors.surfaceBorder,
-    borderWidth: 1,
-    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 22,
     padding: 14,
-    marginBottom: 12,
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -126,62 +169,91 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: 10,
+    marginRight: 8,
+  },
+  clockBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(37, 99, 235, 0.10)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
   routineTitle: {
-    color: Colors.text,
-    fontSize: 15,
-    fontWeight: '600',
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '700',
+    flex: 1,
   },
   cronRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
     gap: 8,
+    marginBottom: 10,
   },
-  cronBadge: {
-    backgroundColor: Colors.codeBg,
-    borderColor: Colors.codeBorder,
-    borderWidth: 1,
-    borderRadius: 6,
+  cronPill: {
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 8,
     paddingVertical: 3,
+    borderRadius: 10,
   },
   cronText: {
     color: Colors.primary,
-    fontFamily: 'monospace',
     fontSize: 11,
+    fontFamily: 'monospace',
+    fontWeight: '600',
   },
   botAssignee: {
-    color: Colors.textMuted,
+    color: '#475569',
     fontSize: 12,
+    fontWeight: '500',
   },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
-    paddingTop: 10,
+    borderTopColor: 'rgba(15, 23, 42, 0.06)',
+    paddingTop: 8,
   },
   lastRunText: {
-    color: Colors.textMuted,
-    fontSize: 12,
+    color: '#64748B',
+    fontSize: 11,
   },
-  runNowBtn: {
+  runPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
-  runNowBtnActive: {
-    backgroundColor: Colors.accent,
-  },
-  runNowText: {
-    color: '#000',
-    fontSize: 12,
+  runPillText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '700',
+  },
+  emptyCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.70)',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+  },
+  emptyTitle: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    color: '#64748B',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

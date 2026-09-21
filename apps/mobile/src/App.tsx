@@ -10,9 +10,10 @@ import { BotsScreen } from './screens/BotsScreen';
 import { StandaloneConsoleScreen } from './screens/StandaloneConsoleScreen';
 import { PairingScreen } from './screens/PairingScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { RoutinesScreen } from './screens/RoutinesScreen';
 import { triggerHaptic } from './services/haptics';
 
-type Tab = 'chat' | 'bots' | 'console' | 'pairing' | 'settings';
+type Tab = 'chat' | 'bots' | 'console' | 'pairing' | 'settings' | 'routines';
 
 const MainNavigator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('chat');
@@ -55,7 +56,12 @@ const MainNavigator: React.FC = () => {
               <SettingsScreen
                 onClose={() => setActiveTab('chat')}
                 onOpenPairing={() => setActiveTab('pairing')}
+                onOpenRoutines={() => setActiveTab('routines')}
               />
+            )}
+
+            {activeTab === 'routines' && (
+              <RoutinesScreen onClose={() => setActiveTab('settings')} />
             )}
           </View>
 

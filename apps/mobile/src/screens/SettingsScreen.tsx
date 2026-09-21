@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Server,
   Volume2,
@@ -9,6 +10,9 @@ import {
   ArrowLeft,
   Smartphone,
   Info,
+  Sparkles,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
@@ -18,9 +22,11 @@ import { triggerHaptic } from '../services/haptics';
 interface SettingsScreenProps {
   onClose: () => void;
   onOpenPairing: () => void;
+  onOpenRoutines?: () => void;
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onOpenPairing }) => {
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onOpenPairing, onOpenRoutines }) => {
+  const insets = useSafeAreaInsets();
   const {
     activeServer,
     disconnectServer,
@@ -31,9 +37,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onOpenP
   const [pingLatency, setPingLatency] = useState<number | null>(null);
   const [isPinging, setIsPinging] = useState(false);
 
+  const topOffset = Math.max(insets.top, Platform.OS === 'android' ? 24 : 12) + 6;
+
   const handleTestLatency = async () => {
     if (!activeServer?.url) {
-      Alert.alert('Standalone Mode', 'Connect to a desktop companion instance to measure ping latency.');
+      Alert.alert('Standalone Sandbox', 'Running fully on-device via native proroot Linux sandbox.');
       return;
     }
     setIsPinging(true);
@@ -56,7 +64,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onOpenP
     triggerHaptic.warning();
     Alert.alert(
       'Clear Cache',
-      'This will reset local cached messages and saved preferences.',
+      'This will reset local cached messages and preferences.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -65,7 +73,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onOpenP
           onPress: async () => {
             await StorageService.clearAll();
             triggerHaptic.success();
-            Alert.alert('Cache Cleared', 'Local offline data reset.');
+            Alert.alert('Cleared', 'Cache cleared successfully.');
           },
         },
       ]
@@ -73,138 +81,149 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onOpenP
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={onClose} activeOpacity={0.7}>
-          <ArrowLeft size={20} color={Colors.text} />
+    <View style={[styles.container, { paddingTop: topOffset }]}>
+      {/* Header Pill */}
+      <View style={styles.headerPill}>
+        <TouchableOpacity style={styles.backPill} onPress={onClose} activeOpacity={0.7}>
+          <ArrowLeft size={17} color="#000000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Settings & Companion</Text>
-        <View style={{ width: 36 }} />
+        <Text style={styles.headerTitle}>Settings & Engine</Text>
+        <View style={{ width: 32 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Connection Status Card */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Network & Node</Text>
-          <View style={styles.card}>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Server size={18} color={Colors.primary} style={{ marginRight: 10 }} />
-                <View>
-                  <Text style={styles.rowTitle}>Server Link</Text>
-                  <Text style={styles.rowSubtitle}>
-                    {activeServer?.url || 'Standalone Demo Mode'}
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.chipBtn} onPress={onOpenPairing}>
-                <Text style={styles.chipBtnText}>
-                  {activeServer ? 'Switch' : 'Pair'}
-                </Text>
-              </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Environment & Mode Card */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Runtime Engine</Text>
+          <View style={styles.row}>
+            <View style={styles.rowIconBadge}>
+              <Smartphone size={18} color={Colors.primary} />
             </View>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowTitle}>Linux Sandbox</Text>
+              <Text style={styles.rowSubtitle}>Embedded arm64-v8a proroot (Zero-Root)</Text>
+            </View>
+            <View style={styles.statusPillActive}>
+              <Text style={styles.statusPillText}>Ready</Text>
+            </View>
+          </View>
 
-            <View style={styles.divider} />
+          <View style={styles.divider} />
 
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Activity size={18} color={Colors.accent} style={{ marginRight: 10 }} />
-                <View>
-                  <Text style={styles.rowTitle}>Round-Trip Latency</Text>
-                  <Text style={styles.rowSubtitle}>
-                    {pingLatency === null
-                      ? 'Not measured'
-                      : pingLatency === -1
-                      ? 'Unreachable'
-                      : `${pingLatency} ms`}
-                  </Text>
-                </View>
-              </View>
+          <TouchableOpacity
+            style={styles.actionRow}
+            onPress={onOpenPairing}
+            activeOpacity={0.7}
+          >
+            <View style={styles.rowIconBadge}>
+              <Server size={18} color={Colors.secondary} />
+            </View>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowTitle}>Remote Companion Sync</Text>
+              <Text style={styles.rowSubtitle}>
+                {activeServer ? activeServer.url : 'Not connected (Standalone mode)'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {onOpenRoutines && (
+            <>
+              <View style={styles.divider} />
               <TouchableOpacity
-                style={styles.chipBtn}
-                onPress={handleTestLatency}
-                disabled={isPinging}
+                style={styles.actionRow}
+                onPress={onOpenRoutines}
+                activeOpacity={0.7}
               >
-                <Text style={styles.chipBtnText}>{isPinging ? 'Pinging...' : 'Ping'}</Text>
+                <View style={styles.rowIconBadge}>
+                  <Clock size={18} color={Colors.accent} />
+                </View>
+                <View style={styles.rowTextWrap}>
+                  <Text style={styles.rowTitle}>Routines & Automations</Text>
+                  <Text style={styles.rowSubtitle}>Scheduled recurring agent tasks</Text>
+                </View>
               </TouchableOpacity>
-            </View>
-          </View>
+            </>
+          )}
         </View>
 
-        {/* Interaction Preferences */}
-        <View style={styles.section}>
+        {/* Preferences Card */}
+        <View style={styles.card}>
           <Text style={styles.sectionTitle}>Preferences</Text>
-          <View style={styles.card}>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Volume2 size={18} color={Colors.secondary} style={{ marginRight: 10 }} />
-                <View>
-                  <Text style={styles.rowTitle}>Voice Synthesis</Text>
-                  <Text style={styles.rowSubtitle}>Read out bot answers on tap</Text>
-                </View>
-              </View>
-              <Switch
-                value={voiceEnabled}
-                onValueChange={setVoiceEnabled}
-                trackColor={{ false: Colors.surfaceBorder, true: Colors.primary }}
-                thumbColor={voiceEnabled ? '#000' : '#888'}
-              />
-            </View>
 
-            <View style={styles.divider} />
-
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Smartphone size={18} color={Colors.accent} style={{ marginRight: 10 }} />
-                <View>
-                  <Text style={styles.rowTitle}>Haptic Feedback</Text>
-                  <Text style={styles.rowSubtitle}>Tactile clicks for actions & approvals</Text>
-                </View>
-              </View>
-              <Switch
-                value={hapticsEnabled}
-                onValueChange={setHapticsEnabled}
-                trackColor={{ false: Colors.surfaceBorder, true: Colors.primary }}
-                thumbColor={hapticsEnabled ? '#000' : '#888'}
-              />
+          <View style={styles.row}>
+            <View style={styles.rowIconBadge}>
+              <Volume2 size={18} color={Colors.primary} />
             </View>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowTitle}>Speech Synthesis (TTS)</Text>
+              <Text style={styles.rowSubtitle}>Read assistant answers out loud</Text>
+            </View>
+            <Switch
+              value={voiceEnabled}
+              onValueChange={setVoiceEnabled}
+              trackColor={{ false: '#E2E8F0', true: Colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <View style={styles.rowIconBadge}>
+              <Activity size={18} color={Colors.accent} />
+            </View>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowTitle}>Haptic Feedback</Text>
+              <Text style={styles.rowSubtitle}>Vibrate on actions and approvals</Text>
+            </View>
+            <Switch
+              value={hapticsEnabled}
+              onValueChange={setHapticsEnabled}
+              trackColor={{ false: '#E2E8F0', true: Colors.primary }}
+              thumbColor="#FFFFFF"
+            />
           </View>
         </View>
 
-        {/* Security & Data */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Security & Cache</Text>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.dangerRow} onPress={handleClearCache}>
-              <Trash2 size={18} color={Colors.error} style={{ marginRight: 10 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.rowTitle, { color: Colors.error }]}>Clear Local Data Cache</Text>
-                <Text style={styles.rowSubtitle}>Purge offline transcript history</Text>
-              </View>
-            </TouchableOpacity>
+        {/* Diagnostic & Storage Card */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Maintenance</Text>
 
-            {activeServer && (
-              <>
-                <View style={styles.divider} />
-                <TouchableOpacity style={styles.dangerRow} onPress={disconnectServer}>
-                  <Shield size={18} color={Colors.warning} style={{ marginRight: 10 }} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.rowTitle, { color: Colors.warning }]}>Unpair Current Device</Text>
-                    <Text style={styles.rowSubtitle}>Revoke local token & return to standalone</Text>
-                  </View>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </View>
+          <TouchableOpacity
+            style={styles.actionRow}
+            onPress={handleTestLatency}
+            activeOpacity={0.7}
+          >
+            <View style={styles.rowIconBadge}>
+              <Activity size={18} color={Colors.warning} />
+            </View>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowTitle}>Diagnostics Ping</Text>
+              <Text style={styles.rowSubtitle}>
+                {isPinging
+                  ? 'Testing connection…'
+                  : pingLatency !== null
+                  ? `${pingLatency}ms latency`
+                  : 'Test latency to node'}
+              </Text>
+            </View>
+          </TouchableOpacity>
 
-        {/* About Info */}
-        <View style={styles.aboutBox}>
-          <Info size={16} color={Colors.textMuted} style={{ marginRight: 8 }} />
-          <Text style={styles.aboutText}>
-            OpenMausBot Mobile • Built with React Native & Expo • Local-First Multi-Agent Engine
-          </Text>
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.actionRow}
+            onPress={handleClearCache}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.rowIconBadge, { backgroundColor: 'rgba(220, 38, 38, 0.10)' }]}>
+              <Trash2 size={18} color={Colors.error} />
+            </View>
+            <View style={styles.rowTextWrap}>
+              <Text style={[styles.rowTitle, { color: Colors.error }]}>Clear Local Cache</Text>
+              <Text style={styles.rowSubtitle}>Reset cached conversation messages</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -214,103 +233,115 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onOpenP
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
   },
-  header: {
+  headerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    borderRadius: 30,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+    marginBottom: 12,
   },
-  backBtn: {
-    padding: 6,
+  backPill: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.70)',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
-  title: {
-    color: Colors.text,
-    fontSize: 17,
+  headerTitle: {
+    color: '#000000',
+    fontSize: 14,
     fontWeight: '700',
   },
-  content: {
-    padding: 16,
-    gap: 20,
-  },
-  section: {
-    gap: 8,
-  },
-  sectionTitle: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginLeft: 4,
+  scrollContent: {
+    paddingBottom: 32,
+    gap: 12,
   },
   card: {
-    backgroundColor: Colors.surface,
-    borderColor: Colors.surfaceBorder,
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 22,
+    padding: 16,
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  sectionTitle: {
+    color: '#000000',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  dangerRow: {
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
   },
-  rowLeft: {
-    flexDirection: 'row',
+  rowIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  rowTextWrap: {
     flex: 1,
-    marginRight: 10,
   },
   rowTitle: {
-    color: Colors.text,
+    color: '#000000',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   rowSubtitle: {
-    color: Colors.textMuted,
+    color: '#64748B',
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 1,
+  },
+  statusPillActive: {
+    backgroundColor: 'rgba(5, 150, 105, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  statusPillText: {
+    color: Colors.accent,
+    fontSize: 11,
+    fontWeight: '700',
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.surfaceBorder,
+    backgroundColor: 'rgba(15, 23, 42, 0.06)',
     marginVertical: 12,
-  },
-  chipBtn: {
-    backgroundColor: Colors.surfaceLight,
-    borderColor: Colors.surfaceBorder,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  chipBtnText: {
-    color: Colors.primary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  aboutBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-  },
-  aboutText: {
-    color: Colors.textMuted,
-    fontSize: 11,
-    textAlign: 'center',
-    flex: 1,
   },
 });

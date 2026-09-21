@@ -8,11 +8,14 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  Platform,
 } from 'react-native';
-import { Plus, Check, X, Bot as BotIcon, Sparkles, RefreshCw } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Plus, Check, X, Bot as BotIcon, Sparkles, RefreshCw, ArrowLeft } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
 import { BotAvatar } from '../components/BotAvatar';
+import { triggerHaptic } from '../services/haptics';
 
 interface BotsScreenProps {
   onClose: () => void;
@@ -20,13 +23,14 @@ interface BotsScreenProps {
 
 const PROVIDERS = [
   { id: 'claude', name: 'Claude', defaultModel: 'claude-3-5-sonnet', color: '#D97706' },
-  { id: 'codex', name: 'Codex / GPT', defaultModel: 'gpt-4o', color: '#10B981' },
+  { id: 'codex', name: 'Codex / GPT', defaultModel: 'gpt-4o', color: '#059669' },
   { id: 'grok', name: 'Grok', defaultModel: 'grok-2-beta', color: '#E11D48' },
-  { id: 'ollama', name: 'Local Ollama', defaultModel: 'llama3.3', color: '#8B5CF6' },
-  { id: 'custom', name: 'Custom API', defaultModel: 'custom-model', color: '#38BDF8' },
+  { id: 'ollama', name: 'Local Ollama', defaultModel: 'llama3.3', color: '#7C3AED' },
+  { id: 'custom', name: 'Custom API', defaultModel: 'custom-model', color: '#2563EB' },
 ];
 
 export const BotsScreen: React.FC<BotsScreenProps> = ({ onClose }) => {
+  const insets = useSafeAreaInsets();
   const { bots, activeBotId, selectBot, createBot, refreshFleet } = useOpenMaus();
   const [modalVisible, setModalVisible] = useState(false);
   const [newBotName, setNewBotName] = useState('');
@@ -34,13 +38,17 @@ export const BotsScreen: React.FC<BotsScreenProps> = ({ onClose }) => {
   const [newBotPrompt, setNewBotPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const topOffset = Math.max(insets.top, Platform.OS === 'android' ? 24 : 12) + 6;
+
   const handleSelectBot = (botId: string) => {
+    triggerHaptic.light();
     selectBot(botId);
     onClose();
   };
 
   const handleCreate = async () => {
     if (!newBotName.trim()) return;
+    triggerHaptic.medium();
     setIsSubmitting(true);
     try {
       await createBot(
@@ -59,27 +67,33 @@ export const BotsScreen: React.FC<BotsScreenProps> = ({ onClose }) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <View style={[styles.container, { paddingTop: topOffset }]}>
+      {/* Floating Glass Header */}
+      <View style={styles.headerPill}>
         <View style={styles.titleWrap}>
-          <BotIcon size={22} color={Colors.primary} style={{ marginRight: 8 }} />
-          <Text style={styles.title}>Agent Fleet</Text>
+          <BotIcon size={20} color={Colors.primary} style={{ marginRight: 8 }} />
+          <Text style={styles.title}>Agent Fleet ({bots.length})</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={refreshFleet}
+            style={styles.iconPill}
+            onPress={() => {
+              triggerHaptic.light();
+              refreshFleet();
+            }}
             activeOpacity={0.7}
           >
-            <RefreshCw size={18} color={Colors.textSecondary} />
+            <RefreshCw size={16} color={Colors.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.createBtn}
-            onPress={() => setModalVisible(true)}
+            style={styles.createPill}
+            onPress={() => {
+              triggerHaptic.light();
+              setModalVisible(true);
+            }}
             activeOpacity={0.8}
           >
-            <Plus size={16} color="#000" />
+            <Plus size={15} color="#FFFFFF" />
             <Text style={styles.createBtnText}>New Agent</Text>
           </TouchableOpacity>
         </View>
@@ -89,6 +103,7 @@ export const BotsScreen: React.FC<BotsScreenProps> = ({ onClose }) => {
       <FlatList
         data={bots}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
         renderItem={({ item }) => {
           const isSelected = item.id === activeBotId;
 
@@ -98,104 +113,106 @@ export const BotsScreen: React.FC<BotsScreenProps> = ({ onClose }) => {
               onPress={() => handleSelectBot(item.id)}
               activeOpacity={0.7}
             >
-              <BotAvatar
-                name={item.name}
-                provider={item.provider}
-                color={item.color}
-                size={44}
-                status={item.status}
-              />
-              <View style={styles.botDetails}>
-                <View style={styles.botTitleRow}>
-                  <Text style={styles.botName}>{item.name}</Text>
-                  {isSelected && (
-                    <View style={styles.activeCheck}>
-                      <Check size={14} color={Colors.primary} />
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.botModel} numberOfLines={1}>
-                  {item.model || item.provider}
-                </Text>
-                {item.currentActivity && (
-                  <Text style={styles.botActivity} numberOfLines={1}>
-                    {item.currentActivity}
+              <View style={styles.botCardLeft}>
+                <BotAvatar
+                  name={item.name}
+                  provider={item.provider}
+                  color={item.color}
+                  size={42}
+                  status={item.status}
+                />
+                <View style={styles.botInfo}>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.botName}>{item.name}</Text>
+                    {isSelected && (
+                      <View style={styles.activePillBadge}>
+                        <Check size={11} color="#FFFFFF" />
+                        <Text style={styles.activeBadgeText}>Active</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.botSubtitle} numberOfLines={1}>
+                    {item.model || item.provider} • {(item as any).prompt ? 'Custom instructions' : 'Autonomous mode'}
                   </Text>
-                )}
-              </View>
-              {item.unreadCount && item.unreadCount > 0 ? (
-                <View style={styles.unreadBadge}>
-                  <Text style={styles.unreadText}>{item.unreadCount}</Text>
                 </View>
-              ) : null}
+              </View>
+
+              <View style={styles.providerBadge}>
+                <Text style={styles.providerText}>{item.provider}</Text>
+              </View>
             </TouchableOpacity>
           );
         }}
-        contentContainerStyle={styles.listContent}
       />
 
-      {/* Create Bot Modal */}
+      {/* Create New Agent Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Create New Agent</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <X size={20} color={Colors.textMuted} />
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={() => setModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <X size={18} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={styles.modalContent}>
-              <Text style={styles.inputLabel}>Agent Name</Text>
+            <ScrollView contentContainerStyle={styles.modalBody}>
+              <Text style={styles.fieldLabel}>Agent Name</Text>
               <TextInput
-                style={styles.textInput}
-                placeholder="e.g. SRE Ops Bot, Code Reviewer"
-                placeholderTextColor={Colors.textMuted}
+                style={styles.input}
+                placeholder="e.g. Code Reviewer, Python Dev"
+                placeholderTextColor="#94A3B8"
                 value={newBotName}
                 onChangeText={setNewBotName}
               />
 
-              <Text style={styles.inputLabel}>Model Provider</Text>
-              <View style={styles.providerGrid}>
-                {PROVIDERS.map((p) => {
-                  const isChosen = selectedProvider.id === p.id;
+              <Text style={styles.fieldLabel}>AI Provider</Text>
+              <View style={styles.providersRow}>
+                {PROVIDERS.map((prov) => {
+                  const isProvActive = selectedProvider.id === prov.id;
                   return (
                     <TouchableOpacity
-                      key={p.id}
-                      style={[
-                        styles.providerChip,
-                        isChosen && { borderColor: p.color, backgroundColor: `${p.color}22` },
-                      ]}
-                      onPress={() => setSelectedProvider(p)}
-                      activeOpacity={0.7}
+                      key={prov.id}
+                      style={[styles.providerPill, isProvActive && styles.providerPillActive]}
+                      onPress={() => setSelectedProvider(prov)}
                     >
-                      <View style={[styles.providerDot, { backgroundColor: p.color }]} />
-                      <Text style={[styles.providerText, isChosen && { color: '#FFF', fontWeight: '700' }]}>
-                        {p.name}
+                      <Text
+                        style={[
+                          styles.providerPillText,
+                          isProvActive && styles.providerPillTextActive,
+                        ]}
+                      >
+                        {prov.name}
                       </Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
 
-              <Text style={styles.inputLabel}>System Instructions / Persona</Text>
+              <Text style={styles.fieldLabel}>System Prompt / Instructions (Optional)</Text>
               <TextInput
-                style={[styles.textInput, styles.textArea]}
-                placeholder="Describe this agent's specialty, tools access, and responsibilities..."
-                placeholderTextColor={Colors.textMuted}
+                style={[styles.input, styles.textArea]}
+                placeholder="Describe the agent's role and behavior..."
+                placeholderTextColor="#94A3B8"
                 value={newBotPrompt}
                 onChangeText={setNewBotPrompt}
                 multiline
+                numberOfLines={4}
               />
 
               <TouchableOpacity
-                style={[styles.submitBtn, !newBotName.trim() && styles.submitBtnDisabled]}
+                style={[styles.submitPill, !newBotName.trim() && styles.submitPillDisabled]}
                 onPress={handleCreate}
                 disabled={!newBotName.trim() || isSubmitting}
                 activeOpacity={0.8}
               >
-                <Sparkles size={16} color="#000" style={{ marginRight: 6 }} />
-                <Text style={styles.submitBtnText}>Deploy Agent</Text>
+                <Text style={styles.submitPillText}>
+                  {isSubmitting ? 'Creating Agent…' : 'Deploy Agent to Fleet'}
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -208,192 +225,242 @@ export const BotsScreen: React.FC<BotsScreenProps> = ({ onClose }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
   },
-  header: {
+  headerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    borderRadius: 30,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+    marginBottom: 12,
   },
   titleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   title: {
-    fontSize: 18,
+    color: '#000000',
+    fontSize: 15,
     fontWeight: '700',
-    color: Colors.text,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  actionBtn: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: Colors.surfaceLight,
+  iconPill: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.70)',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
-  createBtn: {
+  createPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.primary,
-    paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingVertical: 7,
+    borderRadius: 20,
+    gap: 4,
   },
   createBtnText: {
-    color: '#000',
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700',
-    fontSize: 13,
-    marginLeft: 4,
   },
   listContent: {
-    padding: 14,
+    paddingBottom: 20,
+    gap: 8,
   },
   botCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderColor: Colors.surfaceBorder,
-    borderWidth: 1,
-    borderRadius: 14,
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 22,
     padding: 14,
-    marginBottom: 10,
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   botCardActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderColor: Colors.primary,
-    backgroundColor: 'rgba(56, 189, 248, 0.05)',
+    borderWidth: 2,
   },
-  botDetails: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  botTitleRow: {
+  botCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
+  },
+  botInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   botName: {
-    color: Colors.text,
-    fontSize: 16,
+    color: '#000000',
+    fontSize: 15,
     fontWeight: '700',
   },
-  activeCheck: {
-    marginLeft: 6,
+  activePillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    gap: 3,
   },
-  botModel: {
-    color: Colors.textSecondary,
+  activeBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  botSubtitle: {
+    color: '#475569',
     fontSize: 12,
     marginTop: 2,
+    fontWeight: '500',
   },
-  botActivity: {
-    color: Colors.accent,
-    fontSize: 11,
-    marginTop: 4,
-    fontStyle: 'italic',
+  providerBadge: {
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  unreadBadge: {
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  unreadText: {
-    color: '#000',
-    fontSize: 11,
+  providerText: {
+    color: Colors.primary,
+    fontSize: 10,
     fontWeight: '700',
+    textTransform: 'uppercase',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'flex-end',
   },
-  modalContainer: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 32,
     maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
   modalTitle: {
-    color: Colors.text,
-    fontSize: 18,
+    color: '#000000',
+    fontSize: 17,
     fontWeight: '700',
   },
-  modalContent: {
-    paddingBottom: 20,
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.05)',
   },
-  inputLabel: {
-    color: Colors.textSecondary,
+  modalBody: {
+    gap: 12,
+  },
+  fieldLabel: {
+    color: '#0F172A',
     fontSize: 13,
     fontWeight: '600',
-    marginTop: 12,
-    marginBottom: 6,
   },
-  textInput: {
-    backgroundColor: Colors.surfaceLight,
-    borderColor: Colors.surfaceBorder,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 12,
-    color: Colors.text,
+  input: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: '#000000',
     fontSize: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   textArea: {
-    minHeight: 80,
+    height: 90,
     textAlignVertical: 'top',
   },
-  providerGrid: {
+  providersRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  providerChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceLight,
-    borderColor: Colors.surfaceBorder,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 8,
+  providerPill: {
     paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
-  providerDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
+  providerPillActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
-  providerText: {
-    color: Colors.textSecondary,
+  providerPillText: {
+    color: '#334155',
     fontSize: 12,
+    fontWeight: '600',
   },
-  submitBtn: {
-    flexDirection: 'row',
+  providerPillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  submitPill: {
+    backgroundColor: Colors.primary,
+    borderRadius: 24,
+    paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginTop: 20,
+    marginTop: 10,
   },
-  submitBtnDisabled: {
-    backgroundColor: Colors.surfaceLight,
+  submitPillDisabled: {
+    opacity: 0.5,
   },
-  submitBtnText: {
-    color: '#000',
+  submitPillText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '700',
-    fontSize: 15,
   },
 });

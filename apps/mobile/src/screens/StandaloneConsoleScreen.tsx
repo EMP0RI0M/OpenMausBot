@@ -7,8 +7,9 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
+  Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Terminal, Play, Trash2, ArrowLeft, ShieldCheck, Sparkles } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { ProrootSandbox } from '../engine/ProrootSandbox';
@@ -19,15 +20,18 @@ interface StandaloneConsoleScreenProps {
 }
 
 export const StandaloneConsoleScreen: React.FC<StandaloneConsoleScreenProps> = ({ onClose }) => {
+  const insets = useSafeAreaInsets();
   const [consoleLogs, setConsoleLogs] = useState<string>(
-    '⚡ Initializing Standalone Linux Sandbox (MIT / Non-Copyleft)...\n' +
-    '✓ proroot path translation engine initialized.\n' +
-    '✓ Environment mapped to /root inside private app storage.\n' +
-    'Type Antigravity (agy) or Linux commands below:\n\n'
+    '⚡ Standalone Linux Sandbox (MIT proroot / Non-Copyleft)\n' +
+    '✓ Environment mapped to /root inside private app storage\n' +
+    '✓ Google Antigravity CLI (agy) runtime initialized\n' +
+    'Type commands below:\n\n'
   );
   const [userInput, setUserInput] = useState<string>('');
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const topOffset = Math.max(insets.top, Platform.OS === 'android' ? 24 : 12) + 6;
 
   useEffect(() => {
     const unsubscribe = ProrootSandbox.subscribeToStream((event) => {
@@ -66,204 +70,231 @@ export const StandaloneConsoleScreen: React.FC<StandaloneConsoleScreenProps> = (
     setConsoleLogs('Console cleared.\nroot@sandbox-ubuntu:~# ');
   };
 
+  const handleQuickCmd = (cmd: string) => {
+    setUserInput(cmd);
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        {onClose ? (
-          <TouchableOpacity style={styles.backBtn} onPress={onClose} activeOpacity={0.7}>
-            <ArrowLeft size={20} color={Colors.text} />
-          </TouchableOpacity>
-        ) : (
-          <Terminal size={20} color={Colors.primary} />
-        )}
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitle}>Standalone AGI Console</Text>
-          <View style={styles.licenseBadge}>
-            <ShieldCheck size={11} color={Colors.accent} style={{ marginRight: 4 }} />
-            <Text style={styles.licenseText}>MIT proroot • No Termux</Text>
+    <View style={[styles.container, { paddingTop: topOffset }]}>
+      {/* Floating Glass Header */}
+      <View style={styles.headerPill}>
+        <View style={styles.headerLeft}>
+          <Terminal size={18} color={Colors.primary} style={{ marginRight: 8 }} />
+          <View>
+            <Text style={styles.headerTitle}>Linux Sandbox</Text>
+            <View style={styles.licenseRow}>
+              <ShieldCheck size={11} color={Colors.accent} style={{ marginRight: 3 }} />
+              <Text style={styles.licenseText}>MIT proroot • Zero-Root</Text>
+            </View>
           </View>
         </View>
-        <TouchableOpacity style={styles.iconBtn} onPress={handleClear} activeOpacity={0.7}>
-          <Trash2 size={18} color={Colors.textMuted} />
+
+        <TouchableOpacity
+          style={styles.clearBtn}
+          onPress={handleClear}
+          activeOpacity={0.7}
+        >
+          <Trash2 size={16} color="#64748B" />
         </TouchableOpacity>
       </View>
 
-      {/* Terminal View Body */}
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.terminalBody}
-        contentContainerStyle={styles.terminalContent}
-      >
-        <Text style={styles.terminalText} selectable>
-          {consoleLogs}
-        </Text>
-      </ScrollView>
-
-      {/* Quick Antigravity Prompts Bar */}
-      <View style={styles.quickBar}>
-        <TouchableOpacity
-          style={styles.quickChip}
-          onPress={() => setUserInput('agy --version')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.quickChipText}>agy --version</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.quickChip}
-          onPress={() => setUserInput('uname -a')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.quickChipText}>uname -a</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.quickChip}
-          onPress={() => setUserInput("agy -p 'Analyze workspace and run tests'")}
-          activeOpacity={0.7}
-        >
-          <Sparkles size={11} color={Colors.primary} style={{ marginRight: 4 }} />
-          <Text style={styles.quickChipText}>agy -p ...</Text>
-        </TouchableOpacity>
+      {/* Quick Action Pills */}
+      <View style={styles.quickActionsRow}>
+        {['agy --version', 'uname -a', 'ls -la /root', 'agy status'].map((cmd) => (
+          <TouchableOpacity
+            key={cmd}
+            style={styles.quickPill}
+            onPress={() => handleQuickCmd(cmd)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.quickPillText}>{cmd}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* Input Deck */}
-      <View style={styles.controlDeck}>
+      {/* Terminal Canvas */}
+      <View style={styles.terminalContainer}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.terminalBody}
+          contentContainerStyle={styles.terminalContent}
+        >
+          <Text style={styles.terminalText} selectable>
+            {consoleLogs}
+          </Text>
+        </ScrollView>
+      </View>
+
+      {/* Input Bar */}
+      <View style={styles.inputBarPill}>
+        <Text style={styles.promptText}>$</Text>
         <TextInput
-          style={styles.terminalInputField}
+          style={styles.cmdInput}
+          placeholder="Type bash or agy command..."
+          placeholderTextColor="#94A3B8"
           value={userInput}
           onChangeText={setUserInput}
-          placeholder="e.g. agy -p 'Refactor authentication module'"
-          placeholderTextColor={Colors.textMuted}
+          onSubmitEditing={handleCommandSubmission}
+          returnKeyType="go"
           autoCapitalize="none"
           autoCorrect={false}
-          editable={!isRunning}
-          onSubmitEditing={handleCommandSubmission}
         />
         <TouchableOpacity
-          style={[styles.triggerBtn, (!userInput.trim() || isRunning) && styles.triggerBtnDisabled]}
+          style={[styles.runPill, (!userInput.trim() || isRunning) && styles.runPillDisabled]}
           onPress={handleCommandSubmission}
           disabled={!userInput.trim() || isRunning}
           activeOpacity={0.8}
         >
           {isRunning ? (
-            <ActivityIndicator size="small" color="#000" />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Play size={16} color="#000" fill="#000" />
+            <Play size={13} color="#FFFFFF" fill="#FFFFFF" />
           )}
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
   },
-  header: {
+  headerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    borderRadius: 30,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+    marginBottom: 8,
   },
-  backBtn: {
-    padding: 4,
-  },
-  headerTitleWrap: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  licenseBadge: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+  },
+  headerTitle: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  licenseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 1,
   },
   licenseText: {
-    color: Colors.accent,
-    fontSize: 11,
+    color: '#334155',
+    fontSize: 10,
     fontWeight: '600',
   },
-  iconBtn: {
-    padding: 6,
+  clearBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.70)',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 8,
+  },
+  quickPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+  },
+  quickPillText: {
+    color: Colors.primary,
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: 'monospace',
+  },
+  terminalContainer: {
+    flex: 1,
+    backgroundColor: '#0A0C14',
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+    marginBottom: 8,
   },
   terminalBody: {
     flex: 1,
-    backgroundColor: '#05060A',
-    margin: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
   },
   terminalContent: {
-    padding: 12,
+    padding: 14,
   },
   terminalText: {
-    color: Colors.primary,
-    fontFamily: 'monospace',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontSize: 12,
     lineHeight: 18,
+    color: '#38BDF8',
   },
-  quickBar: {
+  inputBarPill: {
     flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
     paddingHorizontal: 12,
-    paddingBottom: 6,
-    gap: 8,
+    paddingVertical: 6,
+    marginBottom: 6,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  quickChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderColor: Colors.surfaceBorder,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
-  },
-  quickChipText: {
-    color: Colors.textSecondary,
-    fontSize: 11,
+  promptText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '700',
     fontFamily: 'monospace',
+    marginRight: 6,
   },
-  controlDeck: {
-    flexDirection: 'row',
-    padding: 10,
-    backgroundColor: Colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
-    alignItems: 'center',
-  },
-  terminalInputField: {
+  cmdInput: {
     flex: 1,
-    backgroundColor: Colors.surfaceLight,
-    borderColor: Colors.surfaceBorder,
-    borderWidth: 1,
-    color: Colors.text,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    fontFamily: 'monospace',
+    color: '#000000',
     fontSize: 13,
+    fontFamily: 'monospace',
+    paddingVertical: 4,
   },
-  triggerBtn: {
-    marginLeft: 8,
+  runPill: {
     backgroundColor: Colors.primary,
-    width: 42,
-    height: 42,
-    borderRadius: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 6,
   },
-  triggerBtnDisabled: {
-    backgroundColor: Colors.surfaceLight,
+  runPillDisabled: {
+    opacity: 0.4,
   },
 });
