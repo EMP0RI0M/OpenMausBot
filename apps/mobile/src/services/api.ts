@@ -1,12 +1,12 @@
 import { Bot, Message } from '../types/models';
 
-export interface PairingResponse {
+export type PairingResponse = {
   token: string;
   deviceName?: string;
   serverVersion?: string;
-}
+};
 
-export class OpenMausApiClient {
+class OpenMausApiClient {
   private baseUrl: string;
   private token: string | null;
   private eventSourceAbortController: AbortController | null = null;
@@ -270,3 +270,7 @@ export class OpenMausApiClient {
     };
   }
 }
+
+export { OpenMausApiClient };
+export default OpenMausApiClient;
+
