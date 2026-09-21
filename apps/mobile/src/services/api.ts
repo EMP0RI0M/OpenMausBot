@@ -212,10 +212,9 @@ export class OpenMausApiClient {
 
     const controller = new AbortController();
     this.eventSourceAbortController = controller;
-
     const sseUrl = `${this.baseUrl}/api/events`;
 
-    (async () => {
+    const startEventStream = async () => {
       try {
         const response = await fetch(sseUrl, {
           method: 'GET',
@@ -262,7 +261,9 @@ export class OpenMausApiClient {
           onError?.(err);
         }
       }
-    })();
+    };
+
+    startEventStream();
 
     return () => {
       controller.abort();

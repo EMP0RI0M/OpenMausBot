@@ -62,15 +62,18 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load persisted server, bots, and messages on startup
   useEffect(() => {
-    (async () => {
+    let isMounted = true;
+
+    const loadPersistedContext = async () => {
       try {
         const saved = await StorageService.getServersList();
+        if (!isMounted) return;
         setSavedServers(saved);
 
         const current = await StorageService.getActiveServer();
         if (current && current.url) {
           const token = await StorageService.getDeviceToken(current.url);
-          if (token) {
+          if (token && isMounted) {
             const client = new OpenMausApiClient(current.url, token);
             setApiClient(client);
             setActiveServer(current);
@@ -78,10 +81,11 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
             try {
               const health = await client.checkHealth();
+              if (!isMounted) return;
               if (health.ok) {
                 setConnectionStatus('connected');
                 const remoteBots = await client.fetchBots();
-                if (remoteBots.length > 0) {
+                if (remoteBots.length > 0 && isMounted) {
                   setBots(remoteBots);
                   setActiveBotId(remoteBots[0].id);
                 }
@@ -89,14 +93,14 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 setConnectionStatus('disconnected');
               }
             } catch {
-              setConnectionStatus('disconnected');
+              if (isMounted) setConnectionStatus('disconnected');
             }
           }
         }
 
         // Restore local persistent messages
         const storedMessages = await AsyncStorage.getItem('@openmaus_messages');
-        if (storedMessages) {
+        if (storedMessages && isMounted) {
           try {
             setMessagesMap(JSON.parse(storedMessages));
           } catch {
@@ -106,7 +110,13 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } catch (err) {
         console.warn('Error loading persisted context:', err);
       }
-    })();
+    };
+
+    loadPersistedContext();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Persist messages whenever they change
