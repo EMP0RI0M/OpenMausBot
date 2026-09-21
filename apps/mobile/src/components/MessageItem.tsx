@@ -7,6 +7,9 @@ import { Colors } from '../theme/colors';
 import { BotAvatar } from './BotAvatar';
 import { ToolActivityBadge } from './ToolActivityBadge';
 import { OptionCardView } from './OptionCardView';
+import { ThoughtBlock } from './ThoughtBlock';
+import { GovernanceCard } from './GovernanceCard';
+import { ArtifactPreviewCard } from './ArtifactPreviewCard';
 import { VoiceService } from '../services/speech';
 import { triggerHaptic } from '../services/haptics';
 
@@ -21,9 +24,19 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Extract <thought> ... </thought> tags if present
+  let thoughtContent: string | null = (message as any).thought || null;
+  let displayContent = message.content || '';
+
+  const thoughtMatch = displayContent.match(/<thought>([\s\S]*?)<\/thought>/i);
+  if (thoughtMatch) {
+    thoughtContent = thoughtMatch[1].trim();
+    displayContent = displayContent.replace(/<thought>[\s\S]*?<\/thought>/i, '').trim();
+  }
+
   const handleCopy = async () => {
     triggerHaptic.light();
-    await Clipboard.setStringAsync(message.content);
+    await Clipboard.setStringAsync(displayContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -35,25 +48,38 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
       setIsPlayingVoice(false);
     } else {
       setIsPlayingVoice(true);
-      VoiceService.speak(message.content, () => setIsPlayingVoice(false));
+      VoiceService.speak(displayContent, () => setIsPlayingVoice(false));
     }
   };
 
-  // Simple Markdown & Code block renderer for React Native
+  // Simple Markdown & Code block renderer
   const renderFormattedContent = (content: string) => {
     const parts = content.split(/(```[\s\S]*?```)/g);
 
     return parts.map((part, index) => {
       if (part.startsWith('```') && part.endsWith('```')) {
         const lines = part.slice(3, -3).trim().split('\n');
-        const lang = lines[0].match(/^[a-zA-Z0-9_-]+$/) ? lines[0] : '';
-        const code = lang ? lines.slice(1).join('\n') : lines.join('\n');
+        const firstLine = lines[0].trim();
+        const hasLang = /^[a-zA-Z0-9_\-./]+$/.test(firstLine);
+        const langOrPath = hasLang ? firstLine : '';
+        const code = hasLang ? lines.slice(1).join('\n') : lines.join('\n');
+
+        if (langOrPath.includes('/') || langOrPath.includes('.')) {
+          return (
+            <ArtifactPreviewCard
+              key={index}
+              filePath={langOrPath}
+              diffOrContent={code}
+              actionType="edit"
+            />
+          );
+        }
 
         return (
           <View key={index} style={styles.codeBlockContainer}>
-            {lang ? (
+            {langOrPath ? (
               <View style={styles.codeHeader}>
-                <Text style={styles.codeLang}>{lang}</Text>
+                <Text style={styles.codeLang}>{langOrPath}</Text>
               </View>
             ) : null}
             <Text style={styles.codeText} selectable>
@@ -63,7 +89,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
         );
       }
 
-      // Inline formatting (bold, inline code)
       return (
         <Text key={index} style={[styles.bodyText, isUser && styles.userBodyText]} selectable>
           {part}
@@ -101,8 +126,17 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
           </View>
         )}
 
+        {/* Rakazo Collapsible Thought Block */}
+        {!isUser && thoughtContent && (
+          <ThoughtBlock thought={thoughtContent} />
+        )}
+
         {/* Content Body */}
-        {message.content ? <View style={styles.contentWrap}>{renderFormattedContent(message.content)}</View> : null}
+        {displayContent ? (
+          <View style={styles.contentWrap}>
+            {renderFormattedContent(displayContent)}
+          </View>
+        ) : null}
 
         {/* Tool Activity Logs */}
         {message.toolActivities && message.toolActivities.length > 0 && (
@@ -113,7 +147,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
           </View>
         )}
 
-        {/* Interactive Option / Approval Card */}
+        {/* CopilotKit OpenBot Governance / Option Card */}
         {message.optionCard && (
           <OptionCardView
             card={message.optionCard}
@@ -128,7 +162,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
           />
         )}
 
-        {/* Footer info: time, copy, voice button */}
+        {/* Footer info: timestamp, copy, speech */}
         <View style={styles.footerRow}>
           <Text style={styles.timestamp}>{formattedTime}</Text>
 
@@ -174,7 +208,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   bubble: {
-    maxWidth: '84%',
+    maxWidth: '86%',
     borderRadius: 16,
     padding: 12,
   },
@@ -207,13 +241,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   providerBadgeText: {
-    color: '#000',
+    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
     textTransform: 'uppercase',
   },
   contentWrap: {
-    marginVertical: 2,
+    marginTop: 2,
   },
   bodyText: {
     color: Colors.text,
@@ -221,47 +255,50 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   userBodyText: {
-    color: '#F1F5F9',
+    color: '#F8FAFC',
   },
   codeBlockContainer: {
-    backgroundColor: Colors.codeBg,
-    borderColor: Colors.codeBorder,
-    borderWidth: 1,
+    backgroundColor: '#0F172A',
     borderRadius: 8,
     padding: 10,
     marginVertical: 6,
+    borderWidth: 1,
+    borderColor: '#1E293B',
   },
   codeHeader: {
     borderBottomWidth: 1,
-    borderBottomColor: Colors.codeBorder,
+    borderBottomColor: '#1E293B',
     paddingBottom: 4,
     marginBottom: 6,
   },
   codeLang: {
-    color: Colors.primary,
-    fontSize: 11,
+    color: Colors.textMuted,
+    fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   codeText: {
-    color: '#E2E8F0',
+    color: '#38BDF8',
     fontFamily: 'monospace',
     fontSize: 12,
     lineHeight: 18,
   },
   toolActivitiesContainer: {
     marginTop: 8,
+    gap: 4,
   },
   footerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 8,
     paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
   },
   timestamp: {
     color: Colors.textMuted,
-    fontSize: 11,
+    fontSize: 10,
   },
   actionButtons: {
     flexDirection: 'row',
