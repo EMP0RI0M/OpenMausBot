@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { QrCode, Link2, Shield, Server, Trash2, ArrowLeft, Check, Smartphone } from 'lucide-react-native';
+import { Server, Trash2, ArrowLeft, Smartphone } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
 import { triggerHaptic } from '../services/haptics';

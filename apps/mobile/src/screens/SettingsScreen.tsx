@@ -6,12 +6,8 @@ import {
   Volume2,
   Trash2,
   Activity,
-  Shield,
   ArrowLeft,
   Smartphone,
-  Info,
-  Sparkles,
-  CheckCircle2,
   Clock,
 } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
@@ -29,7 +25,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onOpenP
   const insets = useSafeAreaInsets();
   const {
     activeServer,
-    disconnectServer,
   } = useOpenMaus();
 
   const [voiceEnabled, setVoiceEnabled] = useState(true);

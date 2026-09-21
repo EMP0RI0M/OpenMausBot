@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Plus, Check, X, Bot as BotIcon, Sparkles, RefreshCw, ArrowLeft } from 'lucide-react-native';
+import { Plus, Check, X, Bot as BotIcon, RefreshCw } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
 import { BotAvatar } from '../components/BotAvatar';

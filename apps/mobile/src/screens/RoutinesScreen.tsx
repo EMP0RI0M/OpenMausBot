@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Switch, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Play, Clock, ArrowLeft, RefreshCw, Sparkles } from 'lucide-react-native';
+import { Play, Clock, ArrowLeft } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
 import { triggerHaptic } from '../services/haptics';

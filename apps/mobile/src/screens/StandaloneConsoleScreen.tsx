@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Terminal, Play, Trash2, ArrowLeft, ShieldCheck, Sparkles } from 'lucide-react-native';
+import { Terminal, Play, Trash2, ArrowLeft, ShieldCheck } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { ProrootSandbox } from '../engine/ProrootSandbox';
 import { triggerHaptic } from '../services/haptics';
@@ -19,7 +19,7 @@ interface StandaloneConsoleScreenProps {
   onClose?: () => void;
 }
 
-export const StandaloneConsoleScreen: React.FC<StandaloneConsoleScreenProps> = ({ onClose }) => {
+export const StandaloneConsoleScreen: React.FC<StandaloneConsoleScreenProps> = ({ onClose: _onClose }) => {
   const insets = useSafeAreaInsets();
   const [consoleLogs, setConsoleLogs] = useState<string>(
     '⚡ Standalone Linux Sandbox (MIT proroot / Non-Copyleft)\n' +
