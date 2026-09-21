@@ -1,4 +1,5 @@
 import { Bot, Message } from '../types/models';
+import { normalizeMessageList, type RawMessage } from '../state/wireAdapter';
 
 export type PairingResponse = {
   token: string;
@@ -122,19 +123,9 @@ class OpenMausApiClient {
     }
 
     const data = await res.json();
-    const rawMsgs = Array.isArray(data) ? data : data.messages || [];
+    const rawMsgs: RawMessage[] = Array.isArray(data) ? data : data.messages || [];
 
-    return rawMsgs.map((m: any) => ({
-      id: m.id || `msg_${Date.now()}_${Math.random()}`,
-      botId: botId,
-      threadId: m.threadId || 'main',
-      role: m.role || (m.isUser ? 'user' : 'assistant'),
-      content: m.content || m.text || '',
-      createdAt: m.createdAt || Date.now(),
-      toolActivities: m.toolActivities || m.tools,
-      optionCard: m.optionCard || m.card,
-      secretRequest: m.secretRequest,
-    }));
+    return normalizeMessageList(rawMsgs, { fallbackBotId: botId });
   }
 
   async sendMessage(botId: string, text: string, threadId?: string): Promise<void> {
@@ -204,17 +195,52 @@ class OpenMausApiClient {
     }
   }
 
-  // Subscribe to SSE stream
-  subscribeToEvents(onEvent: (event: any) => void, onError?: (err: any) => void): () => void {
+  // Subscribe to the SSE stream with automatic reconnect. Phones drop
+  // connections constantly (backgrounding, cellular handoff), so one silent
+  // failure must not leave the UI stale forever: we reopen the stream with
+  // capped exponential backoff + jitter and collapse the backoff whenever data
+  // actually flows. Returns a disposer that stops reconnection.
+  subscribeToEvents(
+    onEvent: (event: any) => void,
+    onError?: (err: any) => void,
+    options?: {
+      baseDelayMs?: number;
+      maxDelayMs?: number;
+      maxReconnectAttempts?: number;
+    }
+  ): () => void {
+    const baseDelayMs = options?.baseDelayMs ?? 1_000;
+    const maxDelayMs = options?.maxDelayMs ?? 30_000;
+    const maxReconnectAttempts =
+      options?.maxReconnectAttempts ?? Number.POSITIVE_INFINITY;
+
     if (this.eventSourceAbortController) {
       this.eventSourceAbortController.abort();
     }
 
-    const controller = new AbortController();
-    this.eventSourceAbortController = controller;
     const sseUrl = `${this.baseUrl}/api/events`;
+    let disposed = false;
+    let attempt = 0;
+    let controller: AbortController | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const startEventStream = async () => {
+    const scheduleReconnect = () => {
+      if (disposed) return;
+      if (attempt >= maxReconnectAttempts) {
+        onError?.(new Error(`SSE reconnect gave up after ${attempt} attempts`));
+        return;
+      }
+      const delay =
+        Math.min(baseDelayMs * 2 ** attempt, maxDelayMs) + Math.random() * baseDelayMs;
+      attempt += 1;
+      timer = setTimeout(() => {
+        if (!disposed) start();
+      }, delay);
+    };
+
+    const start = async () => {
+      controller = new AbortController();
+      this.eventSourceAbortController = controller;
       try {
         const response = await fetch(sseUrl, {
           method: 'GET',
@@ -231,42 +257,49 @@ class OpenMausApiClient {
 
         // On React Native fetch streaming
         const reader = response.body.getReader ? response.body.getReader() : null;
-        if (reader) {
-          const decoder = new TextDecoder();
-          let buffer = '';
+        if (!reader) throw new Error('SSE response body is not readable');
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-            for (const chunk of lines) {
-              const match = chunk.match(/^data:\s*(.+)$/m);
-              if (match) {
-                try {
-                  const data = JSON.parse(match[1]);
-                  onEvent(data);
-                } catch {
-                  // Ignore JSON parse err
-                }
+          attempt = 0; // stream is alive — collapse the backoff
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop() || '';
+
+          for (const chunk of lines) {
+            const match = chunk.match(/^data:\s*(.+)$/m);
+            if (match) {
+              try {
+                onEvent(JSON.parse(match[1]));
+              } catch {
+                // Ignore malformed frames
               }
             }
           }
         }
+
+        if (!disposed) scheduleReconnect(); // a clean end still means reopen
       } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          onError?.(err);
-        }
+        if (disposed || err?.name === 'AbortError') return;
+        onError?.(err);
+        scheduleReconnect();
       }
     };
 
-    startEventStream();
+    start();
 
     return () => {
-      controller.abort();
+      disposed = true;
+      if (timer) clearTimeout(timer);
+      controller?.abort();
+      if (this.eventSourceAbortController === controller) {
+        this.eventSourceAbortController = null;
+      }
     };
   }
 }

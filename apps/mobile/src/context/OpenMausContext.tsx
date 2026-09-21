@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bot, Message, Routine, ServerEndpoint, ConnectionStatus } from '../types/models';
 import { OpenMausApiClient } from '../services/api';
 import { StorageService } from '../services/storage';
 import { triggerHaptic } from '../services/haptics';
 import { ProrootSandbox } from '../engine/ProrootSandbox';
+import { normalizeMessage, upsertMessage, reconcileMessages, type RawMessage } from '../state/wireAdapter';
+import { buildStandaloneInvocation, parseStandaloneInput } from '../state/standaloneCommand';
 
 const DEFAULT_INITIAL_BOTS: Bot[] = [
   {
@@ -126,26 +128,43 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [messagesMap]);
 
+  // Latest active bot, readable from the long-lived SSE closure without making
+  // it a dependency (which would tear down and reopen the stream on every pick).
+  const activeBotIdRef = useRef(activeBotId);
+  useEffect(() => {
+    activeBotIdRef.current = activeBotId;
+  }, [activeBotId]);
+
   // Listen to SSE events when connected to companion server
   useEffect(() => {
     if (connectionStatus === 'connected' && apiClient) {
       const unsubscribe = apiClient.subscribeToEvents(
-        (event) => {
-          if (event.type === 'message' || event.type === 'token') {
-            if (event.botId) {
-              setMessagesMap((prev) => {
-                const currentList = prev[event.botId] || [];
-                return {
-                  ...prev,
-                  [event.botId]: [...currentList, event.message],
-                };
-              });
+        (event: any) => {
+          const kind: string | undefined = event?.kind ?? event?.type;
+
+          if (kind === 'message' || kind === 'message.patch') {
+            const raw = event.message as RawMessage | undefined;
+            if (!raw) return;
+            const normalized = normalizeMessage(raw, {
+              threadId: event.threadId,
+              fallbackBotId: activeBotIdRef.current,
+            });
+            setMessagesMap((prev) => ({
+              ...prev,
+              [normalized.botId]: upsertMessage(prev[normalized.botId] || [], normalized),
+            }));
+            if (kind === 'message' && normalized.optionCard && !normalized.optionCard.answered) {
+              triggerHaptic.warning();
             }
-          } else if (event.type === 'card' && event.botId) {
-            triggerHaptic.warning();
-          } else if (event.type === 'status_change') {
+            return;
+          }
+
+          if (kind === 'bot' && event.bot?.id) {
+            const botId: string = event.bot.id;
             setBots((prev) =>
-              prev.map((b) => (b.id === event.botId ? { ...b, status: event.status } : b))
+              prev.some((b) => b.id === botId)
+                ? prev.map((b) => (b.id === botId ? { ...b, ...event.bot } : b))
+                : prev
             );
           }
         },
@@ -173,7 +192,7 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       apiClient.markAsRead(botId);
       apiClient.fetchMessages(botId).then((msgs) => {
         if (msgs.length > 0) {
-          setMessagesMap((prev) => ({ ...prev, [botId]: msgs }));
+          setMessagesMap((prev) => ({ ...prev, [botId]: reconcileMessages(prev[botId] || [], msgs) }));
         }
       }).catch(() => {});
     }
@@ -341,8 +360,12 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setIsGenerating(true);
       try {
         let output = '';
-        const isCommand = text.startsWith('!') || text.startsWith('agy') || text.startsWith('ls') || text.startsWith('uname') || text.startsWith('cat');
-        const cmdToRun = isCommand ? text.replace(/^!\s*/, '') : `agy -p "${text.replace(/"/g, '\\"')}"`;
+        const intent = parseStandaloneInput(text);
+        const cmdToRun = buildStandaloneInvocation(intent);
+        if (!cmdToRun) {
+          setIsGenerating(false);
+          return;
+        }
 
         output = await ProrootSandbox.runLinuxCommand(cmdToRun);
 

@@ -45,6 +45,7 @@
     "typecheck": "tsc -b && tsc -p tsconfig.server.json",
     "test": "vitest run && pnpm broker:test && pnpm test:electron && pnpm test:packaged-server",
     "test:electron": "node --test \"electron/*.node-test.mjs\"",
+    "test:mobile": "vitest run --config apps/mobile/vitest.config.ts",
     "bench:observation": "node --experimental-strip-types scripts/bench-observation.ts",
     "test:watch": "vitest",
     "test:cua": "pnpm build:cua && node scripts/smoke-cua.mjs",
