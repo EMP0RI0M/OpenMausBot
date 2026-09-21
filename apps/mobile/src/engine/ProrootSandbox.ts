@@ -1,7 +1,14 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 
 const { ProrootEngineModule } = NativeModules;
-const eventEmitter = ProrootEngineModule ? new NativeEventEmitter(ProrootEngineModule) : null;
+let eventEmitter: NativeEventEmitter | null = null;
+try {
+  if (Platform.OS === 'android' && ProrootEngineModule) {
+    eventEmitter = new NativeEventEmitter(ProrootEngineModule);
+  }
+} catch {
+  eventEmitter = null;
+}
 
 export interface SandboxOutputEvent {
   stream: 'stdout' | 'stderr';
