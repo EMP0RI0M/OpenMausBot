@@ -5,6 +5,7 @@ import { MessageSquare, Users, Terminal } from 'lucide-react-native';
 import { Colors } from './theme/colors';
 import { OpenMausProvider, useOpenMaus } from './context/OpenMausContext';
 import { GlassBackground } from './components/GlassBackground';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ChatScreen } from './screens/ChatScreen';
 import { BotsScreen } from './screens/BotsScreen';
 import { StandaloneConsoleScreen } from './screens/StandaloneConsoleScreen';
@@ -32,7 +33,8 @@ const MainNavigator: React.FC = () => {
         <View style={styles.container}>
           {/* Main View Area */}
           <View style={styles.screenContainer}>
-            {activeTab === 'chat' && (
+            <ErrorBoundary key={activeTab} onReset={() => setActiveTab('chat')}>
+              {activeTab === 'chat' && (
               <ChatScreen
                 onOpenBots={() => setActiveTab('bots')}
                 onOpenSettings={() => setActiveTab('settings')}
@@ -63,6 +65,7 @@ const MainNavigator: React.FC = () => {
             {activeTab === 'routines' && (
               <RoutinesScreen onClose={() => setActiveTab('settings')} />
             )}
+            </ErrorBoundary>
           </View>
 
           {/* Floating Glossy Foggy Glass Pill Bottom Navigation Dock */}
