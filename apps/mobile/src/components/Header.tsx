@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Wifi, WifiOff, Settings, AlertCircle } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Settings, Sparkles, Terminal, ChevronDown } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
 import { BotAvatar } from './BotAvatar';
+import { triggerHaptic } from '../services/haptics';
 
 interface HeaderProps {
   onOpenBots?: () => void;
@@ -12,61 +13,90 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenBots, onOpenSettings, onOpenPairing }) => {
-  const { activeBot, connectionStatus, attentionItemsCount } = useOpenMaus();
-
+  const { activeBot, connectionStatus, attentionItemsCount, isGenerating } = useOpenMaus();
   const isConnected = connectionStatus === 'connected';
+
+  const handleBotPress = () => {
+    triggerHaptic.light();
+    onOpenBots?.();
+  };
+
+  const handleSettingsPress = () => {
+    triggerHaptic.light();
+    onOpenSettings?.();
+  };
+
+  const handlePairingPress = () => {
+    triggerHaptic.light();
+    onOpenPairing?.();
+  };
 
   return (
     <View style={styles.container}>
-      {/* Bot Info & Switcher Button */}
-      <TouchableOpacity style={styles.botSelector} onPress={onOpenBots} activeOpacity={0.7}>
+      {/* Active Agent Pill Selector */}
+      <TouchableOpacity
+        style={styles.agentPill}
+        onPress={handleBotPress}
+        activeOpacity={0.7}
+      >
         <BotAvatar
-          name={activeBot?.name || 'Maus'}
+          name={activeBot?.name || 'Agent'}
           provider={activeBot?.provider}
           color={activeBot?.color}
-          size={36}
+          size={28}
           status={activeBot?.status}
         />
-        <View style={styles.botTextWrap}>
+        <View style={styles.agentInfo}>
           <View style={styles.nameRow}>
-            <Text style={styles.botName} numberOfLines={1}>
-              {activeBot?.name || 'OpenMausBot'}
+            <Text style={styles.agentName} numberOfLines={1}>
+              {activeBot?.name || 'Antigravity'}
             </Text>
+            <ChevronDown size={12} color={Colors.textMuted} style={{ marginLeft: 2 }} />
           </View>
-          <Text style={styles.botModel} numberOfLines={1}>
-            {activeBot?.model || 'Autonomous Agent'}
+          <Text style={styles.modelTag} numberOfLines={1}>
+            {isGenerating ? 'Generating response…' : (activeBot?.model || 'Autonomous Linux Agent')}
           </Text>
         </View>
       </TouchableOpacity>
 
-      {/* Right Controls: Attention indicator, Connection pill, Settings */}
+      {/* Right Minimal Controls */}
       <View style={styles.rightGroup}>
-        {attentionItemsCount > 0 && (
-          <View style={styles.attentionBadge}>
-            <AlertCircle size={14} color="#FFF" style={{ marginRight: 4 }} />
-            <Text style={styles.attentionText}>{attentionItemsCount}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity style={styles.statusPill} onPress={onOpenPairing} activeOpacity={0.7}>
-          {isConnected ? (
-            <Wifi size={14} color={Colors.accent} />
-          ) : (
-            <WifiOff size={14} color={connectionStatus === 'connecting' ? Colors.warning : Colors.textMuted} />
-          )}
-          <Text
+        {/* Status chip */}
+        <TouchableOpacity
+          style={styles.connectionChip}
+          onPress={handlePairingPress}
+          activeOpacity={0.7}
+        >
+          <View
             style={[
-              styles.statusPillText,
-              isConnected && { color: Colors.accent },
-              connectionStatus === 'connecting' && { color: Colors.warning },
+              styles.statusDot,
+              { backgroundColor: isConnected ? Colors.accent : '#64748b' },
             ]}
-          >
-            {connectionStatus === 'connected' ? 'Synced' : connectionStatus === 'connecting' ? 'Syncing' : 'Offline'}
+          />
+          <Text style={styles.statusText}>
+            {isConnected ? 'Synced' : 'Local Sandbox'}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.iconBtn} onPress={onOpenSettings} activeOpacity={0.7}>
-          <Settings size={20} color={Colors.textSecondary} />
+        {/* Attention badge if any */}
+        {attentionItemsCount > 0 && (
+          <TouchableOpacity
+            style={styles.attentionPill}
+            onPress={handleBotPress}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.attentionText}>{attentionItemsCount}</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Settings button */}
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={handleSettingsPress}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Settings size={18} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -78,34 +108,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
+    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
   },
-  botSelector: {
+  agentPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    marginRight: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    maxWidth: '58%',
   },
-  botTextWrap: {
-    marginLeft: 10,
-    flex: 1,
+  agentInfo: {
+    marginLeft: 8,
+    justifyContent: 'center',
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  botName: {
+  agentName: {
     color: Colors.text,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: -0.2,
   },
-  botModel: {
+  modelTag: {
     color: Colors.textMuted,
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 1,
   },
   rightGroup: {
@@ -113,38 +149,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  attentionBadge: {
+  connectionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.warning,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    gap: 5,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  attentionPill: {
+    backgroundColor: Colors.warning,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   attentionText: {
     color: '#000',
     fontSize: 11,
     fontWeight: '700',
   },
-  statusPill: {
-    flexDirection: 'row',
+  iconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
-    backgroundColor: Colors.surfaceLight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-    gap: 5,
-  },
-  statusPillText: {
-    color: Colors.textMuted,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  iconBtn: {
-    padding: 6,
     justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
 });

@@ -8,7 +8,6 @@ import { BotAvatar } from './BotAvatar';
 import { ToolActivityBadge } from './ToolActivityBadge';
 import { OptionCardView } from './OptionCardView';
 import { ThoughtBlock } from './ThoughtBlock';
-import { GovernanceCard } from './GovernanceCard';
 import { ArtifactPreviewCard } from './ArtifactPreviewCard';
 import { VoiceService } from '../services/speech';
 import { triggerHaptic } from '../services/haptics';
@@ -52,7 +51,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
     }
   };
 
-  // Simple Markdown & Code block renderer
+  // Modern Markdown & Code renderer
   const renderFormattedContent = (content: string) => {
     const parts = content.split(/(```[\s\S]*?```)/g);
 
@@ -105,27 +104,19 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
   return (
     <View style={[styles.wrapper, isUser ? styles.userWrapper : styles.botWrapper]}>
       {!isUser && (
-        <View style={styles.avatarGutter}>
+        <View style={styles.botAvatarRow}>
           <BotAvatar
             name={bot?.name || 'Agent'}
             provider={bot?.provider}
             color={bot?.color}
-            size={32}
+            size={22}
             status={bot?.status}
           />
+          <Text style={styles.botNameHeader}>{bot?.name || 'Agent'}</Text>
         </View>
       )}
 
       <View style={[styles.bubble, isUser ? styles.userBubble : styles.botBubble]}>
-        {!isUser && bot && (
-          <View style={styles.botMetaHeader}>
-            <Text style={styles.botName}>{bot.name}</Text>
-            <View style={[styles.providerBadge, { backgroundColor: bot.color || Colors.primary }]}>
-              <Text style={styles.providerBadgeText}>{bot.model || bot.provider}</Text>
-            </View>
-          </View>
-        )}
-
         {/* Rakazo Collapsible Thought Block */}
         {!isUser && thoughtContent && (
           <ThoughtBlock thought={thoughtContent} />
@@ -147,7 +138,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
           </View>
         )}
 
-        {/* CopilotKit OpenBot Governance / Option Card */}
+        {/* Interactive Option / Approval Card */}
         {message.optionCard && (
           <OptionCardView
             card={message.optionCard}
@@ -162,25 +153,25 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
           />
         )}
 
-        {/* Footer info: timestamp, copy, speech */}
+        {/* Footer info: time, copy, voice */}
         <View style={styles.footerRow}>
           <Text style={styles.timestamp}>{formattedTime}</Text>
 
           {!isUser && (
             <View style={styles.actionButtons}>
               <TouchableOpacity onPress={handleCopy} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                {copied ? <Check size={13} color={Colors.accent} /> : <Copy size={13} color={Colors.textMuted} />}
+                {copied ? <Check size={12} color={Colors.accent} /> : <Copy size={12} color={Colors.textMuted} />}
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleToggleVoice}
-                style={{ marginLeft: 10 }}
+                style={{ marginLeft: 8 }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 {isPlayingVoice ? (
-                  <VolumeX size={13} color={Colors.primary} />
+                  <VolumeX size={12} color={Colors.primary} />
                 ) : (
-                  <Volume2 size={13} color={Colors.textMuted} />
+                  <Volume2 size={12} color={Colors.textMuted} />
                 )}
               </TouchableOpacity>
             </View>
@@ -193,81 +184,66 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, bot, onRespon
 
 const styles = StyleSheet.create({
   wrapper: {
-    flexDirection: 'row',
-    marginVertical: 6,
-    paddingHorizontal: 12,
+    marginVertical: 4,
+    paddingHorizontal: 16,
   },
   userWrapper: {
-    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
   },
   botWrapper: {
-    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   },
-  avatarGutter: {
-    marginRight: 8,
-    marginTop: 2,
-  },
-  bubble: {
-    maxWidth: '86%',
-    borderRadius: 16,
-    padding: 12,
-  },
-  userBubble: {
-    backgroundColor: '#1E293B',
-    borderColor: '#334155',
-    borderWidth: 1,
-    borderBottomRightRadius: 4,
-  },
-  botBubble: {
-    backgroundColor: Colors.surface,
-    borderColor: Colors.surfaceBorder,
-    borderWidth: 1,
-    borderBottomLeftRadius: 4,
-  },
-  botMetaHeader: {
+  botAvatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    gap: 6,
+    marginBottom: 4,
   },
-  botName: {
-    color: Colors.text,
-    fontSize: 13,
-    fontWeight: '700',
-    marginRight: 8,
-  },
-  providerBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  providerBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
+  botNameHeader: {
+    fontSize: 12,
     fontWeight: '600',
-    textTransform: 'uppercase',
+    color: Colors.textSecondary,
+  },
+  bubble: {
+    maxWidth: '92%',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  userBubble: {
+    backgroundColor: '#1E2438',
+    borderBottomRightRadius: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  botBubble: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
+    paddingVertical: 2,
   },
   contentWrap: {
-    marginTop: 2,
+    marginVertical: 2,
   },
   bodyText: {
-    color: Colors.text,
+    color: '#E2E8F0',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    letterSpacing: -0.1,
   },
   userBodyText: {
-    color: '#F8FAFC',
+    color: '#FFFFFF',
   },
   codeBlockContainer: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#0A0C12',
     borderRadius: 8,
     padding: 10,
     marginVertical: 6,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   codeHeader: {
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
     paddingBottom: 4,
     marginBottom: 6,
   },
@@ -284,17 +260,14 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   toolActivitiesContainer: {
-    marginTop: 8,
-    gap: 4,
+    marginTop: 6,
+    gap: 3,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 4,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+    marginTop: 4,
   },
   timestamp: {
     color: Colors.textMuted,
