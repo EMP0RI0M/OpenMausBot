@@ -374,7 +374,7 @@ export const OpenMausProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const respondToCard = async (requestId: string, choice: string, isPermission: boolean, allowKey?: string) => {
+  const respondToCard = async (requestId: string, choice: string, _isPermission: boolean, _allowKey?: string) => {
     triggerHaptic.medium();
     const behavior = choice.toLowerCase() === 'deny' ? 'deny' : 'allow';
 
