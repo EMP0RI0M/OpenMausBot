@@ -35,16 +35,8 @@ class MainApplication : Application(), ReactApplication {
       }
   )
 
-  override val reactHost: ReactHost?
-    get() = try {
-      if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
-        ReactNativeHostWrapper.createReactHost(applicationContext, reactNativeHost)
-      } else {
-        null
-      }
-    } catch (_: Throwable) {
-      null
-    }
+  override val reactHost: ReactHost
+    get() = ReactNativeHostWrapper.createReactHost(applicationContext, reactNativeHost)
 
   override fun onCreate() {
     super.onCreate()
