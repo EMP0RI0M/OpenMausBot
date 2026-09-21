@@ -42,7 +42,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <View style={styles.outerContainer}>
-      <View style={[styles.inputPill, isFocused && styles.inputPillFocused]}>
+      <View style={[styles.glossyInputPill, isFocused && styles.glossyInputPillFocused]}>
         {/* Voice Dictation Button */}
         <TouchableOpacity
           style={styles.leadingButton}
@@ -53,7 +53,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           {isRecording ? (
             <MicOff size={18} color={Colors.error} />
           ) : (
-            <Mic size={18} color={Colors.textMuted} />
+            <Mic size={18} color="#64748B" />
           )}
         </TouchableOpacity>
 
@@ -61,7 +61,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <TextInput
           style={styles.textInput}
           placeholder={isRecording ? 'Listening...' : 'Message agent or run linux command...'}
-          placeholderTextColor={isRecording ? Colors.error : Colors.textMuted}
+          placeholderTextColor={isRecording ? Colors.error : '#64748B'}
           value={text}
           onChangeText={setText}
           onFocus={() => setIsFocused(true)}
@@ -71,7 +71,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           returnKeyType="default"
         />
 
-        {/* Action Button: Interrupt or Send */}
+        {/* Action Button */}
         {isGenerating ? (
           <TouchableOpacity
             style={styles.stopButton}
@@ -90,7 +90,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             disabled={!hasText}
             activeOpacity={0.8}
           >
-            <Send size={15} color={hasText ? '#FFFFFF' : Colors.textMuted} />
+            <Send size={15} color={hasText ? '#FFFFFF' : '#94A3B8'} />
           </TouchableOpacity>
         )}
       </View>
@@ -105,27 +105,30 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 14 : 10,
     backgroundColor: 'transparent',
   },
-  inputPill: {
+  glossyInputPill: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
     borderRadius: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.09)',
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
     paddingHorizontal: 10,
     paddingVertical: 6,
     minHeight: 46,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  inputPillFocused: {
+  glossyInputPillFocused: {
+    backgroundColor: 'rgba(255, 255, 255, 0.90)',
     borderColor: Colors.primary,
-    backgroundColor: '#FFFFFF',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
   },
   leadingButton: {
     width: 34,
@@ -136,9 +139,10 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    color: Colors.text,
+    color: '#000000',
     fontSize: 14,
     lineHeight: 20,
+    fontWeight: '500',
     maxHeight: 110,
     paddingTop: Platform.OS === 'ios' ? 7 : 5,
     paddingBottom: Platform.OS === 'ios' ? 7 : 5,
@@ -148,7 +152,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(15, 23, 42, 0.05)',
+    backgroundColor: 'rgba(15, 23, 42, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 4,

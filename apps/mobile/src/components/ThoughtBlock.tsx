@@ -31,7 +31,7 @@ export const ThoughtBlock: React.FC<ThoughtBlockProps> = ({ thought, isStreaming
       <TouchableOpacity
         onPress={toggleExpand}
         activeOpacity={0.7}
-        style={[styles.headerPill, isExpanded && styles.headerPillExpanded]}
+        style={[styles.glossyPill, isExpanded && styles.glossyPillExpanded]}
       >
         <View style={styles.headerLeft}>
           <Sparkles size={13} color={Colors.primary} />
@@ -52,9 +52,9 @@ export const ThoughtBlock: React.FC<ThoughtBlockProps> = ({ thought, isStreaming
             </View>
           )}
           {isExpanded ? (
-            <ChevronUp size={13} color={Colors.textMuted} />
+            <ChevronUp size={13} color="#64748B" />
           ) : (
-            <ChevronDown size={13} color={Colors.textMuted} />
+            <ChevronDown size={13} color="#64748B" />
           )}
         </View>
       </TouchableOpacity>
@@ -74,25 +74,28 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 5,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.70)',
+    backgroundColor: 'rgba(255, 255, 255, 0.60)',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.07)',
+    borderTopColor: 'rgba(255, 255, 255, 0.90)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.70)',
+    borderRightColor: 'rgba(255, 255, 255, 0.70)',
     overflow: 'hidden',
   },
-  headerPill: {
+  glossyPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: 'rgba(241, 245, 249, 0.60)',
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
     borderRadius: 18,
   },
-  headerPillExpanded: {
+  glossyPillExpanded: {
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(15, 23, 42, 0.05)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.06)',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -103,12 +106,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 12,
-    fontWeight: '600',
-    color: Colors.textSecondary,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   preview: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: '#64748B',
     flex: 1,
     fontStyle: 'italic',
   },
@@ -118,7 +121,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   liveIndicator: {
-    backgroundColor: 'rgba(37, 99, 235, 0.10)',
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 10,
@@ -131,12 +134,13 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'rgba(255, 255, 255, 0.50)',
   },
   contentText: {
     fontSize: 12,
     lineHeight: 18,
-    color: Colors.textSecondary,
+    color: '#1E293B',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontWeight: '500',
   },
 });

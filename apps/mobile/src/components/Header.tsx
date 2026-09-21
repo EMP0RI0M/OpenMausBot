@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Settings, ChevronDown, Terminal } from 'lucide-react-native';
+import { Settings, ChevronDown } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBots, onOpenSettings, onOp
 
   return (
     <View style={[styles.outerWrapper, { paddingTop: topOffset }]}>
-      <View style={styles.floatingPillHeader}>
+      <View style={styles.glossyGlassPillHeader}>
         {/* Active Agent Pill Selector */}
         <TouchableOpacity
           style={styles.agentPill}
@@ -111,24 +111,27 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBots, onOpenSettings, onOp
 
 const styles = StyleSheet.create({
   outerWrapper: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingBottom: 6,
     backgroundColor: 'transparent',
   },
-  floatingPillHeader: {
+  glossyGlassPillHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
     borderRadius: 30,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomColor: 'rgba(15, 23, 42, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.80)',
+    borderRightColor: 'rgba(255, 255, 255, 0.80)',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
     elevation: 3,
   },
   agentPill: {
@@ -147,16 +150,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   agentName: {
-    color: Colors.text,
+    color: '#000000',
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: -0.2,
   },
   modelTag: {
-    color: Colors.textSecondary,
+    color: '#334155',
     fontSize: 10,
     marginTop: 1,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   rightGroup: {
     flexDirection: 'row',
@@ -166,10 +169,12 @@ const styles = StyleSheet.create({
   connectionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
     paddingHorizontal: 9,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.80)',
     gap: 5,
   },
   statusDot: {
@@ -178,7 +183,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusText: {
-    color: Colors.textSecondary,
+    color: '#0F172A',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -201,6 +206,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.04)',
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.80)',
   },
 });
