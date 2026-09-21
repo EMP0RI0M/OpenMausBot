@@ -201,17 +201,17 @@ const styles = StyleSheet.create({
   },
   botNameHeader: {
     fontSize: 12,
-    fontWeight: '600',
-    color: Colors.textSecondary,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   bubble: {
     maxWidth: '90%',
   },
   userBubble: {
     backgroundColor: Colors.userBubble,
-    borderRadius: 20,
+    borderRadius: 22,
     borderBottomRightRadius: 4,
-    paddingHorizontal: 14,
+    paddingHorizontal: 15,
     paddingVertical: 10,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
@@ -228,13 +228,14 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   bodyText: {
-    color: Colors.text,
+    color: '#000000',
     fontSize: 14,
     lineHeight: 22,
     letterSpacing: -0.1,
   },
   userBodyText: {
     color: '#FFFFFF',
+    fontWeight: '500',
   },
   codePillContainer: {
     backgroundColor: '#F1F5F9',

@@ -78,7 +78,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyTitle}>No messages yet</Text>
               <Text style={styles.emptySubtitle}>
-                Send a message to start working with {activeBot?.name || 'this agent'}.
+                Send a prompt or command to start working with {activeBot?.name || 'this agent'}.
               </Text>
             </View>
           }
@@ -107,13 +107,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   keyboardContainer: {
     flex: 1,
   },
   listContent: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     flexGrow: 1,
   },
   emptyContainer: {
@@ -121,19 +121,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
-    marginTop: 80,
+    marginTop: 60,
   },
   emptyTitle: {
-    color: Colors.text,
-    fontSize: 17,
+    color: '#000000',
+    fontSize: 18,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   emptySubtitle: {
-    color: Colors.textMuted,
+    color: '#475569',
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    fontWeight: '500',
   },
   generatingIndicator: {
     flexDirection: 'row',
@@ -143,8 +144,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   generatingText: {
-    color: Colors.textSecondary,
+    color: Colors.primary,
     fontSize: 12,
-    fontStyle: 'italic',
+    fontWeight: '600',
   },
 });

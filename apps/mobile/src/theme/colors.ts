@@ -1,12 +1,12 @@
 export const Colors = {
   background: '#F8FAFC', // Slate 50 clean light background
-  surface: 'rgba(255, 255, 255, 0.85)', // Frosted glass white
-  surfaceLight: 'rgba(241, 245, 249, 0.90)',
+  surface: 'rgba(255, 255, 255, 0.90)', // Frosted glass white
+  surfaceLight: 'rgba(241, 245, 249, 0.95)',
   surfaceBorder: 'rgba(15, 23, 42, 0.08)',
   surfaceHover: 'rgba(15, 23, 42, 0.04)',
 
-  glass: 'rgba(255, 255, 255, 0.65)',
-  glassBorder: 'rgba(15, 23, 42, 0.07)',
+  glass: 'rgba(255, 255, 255, 0.85)',
+  glassBorder: 'rgba(15, 23, 42, 0.09)',
   glassGlow: 'rgba(37, 99, 235, 0.08)',
 
   primary: '#2563EB', // Blue 600
@@ -25,9 +25,9 @@ export const Colors = {
   error: '#DC2626', // Red 600
   errorGlow: 'rgba(220, 38, 38, 0.12)',
 
-  text: '#0F172A', // Slate 900
-  textSecondary: '#475569', // Slate 600
-  textMuted: '#94A3B8', // Slate 400
+  text: '#000000', // Deep black for crystal clear legibility
+  textSecondary: '#1E293B', // Slate 800
+  textMuted: '#64748B', // Slate 500
 
   codeBg: '#F1F5F9', // Slate 100
   codeBorder: 'rgba(15, 23, 42, 0.08)',
@@ -35,8 +35,8 @@ export const Colors = {
   userBubble: '#2563EB',
   userBubbleText: '#FFFFFF',
 
-  botBubble: 'rgba(255, 255, 255, 0.90)',
-  botBubbleBorder: 'rgba(15, 23, 42, 0.06)',
+  botBubble: 'transparent',
+  botBubbleBorder: 'transparent',
 
   badge: {
     claude: '#D97706',

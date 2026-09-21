@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Settings, ChevronDown } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Settings, ChevronDown, Terminal } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
 import { useOpenMaus } from '../context/OpenMausContext';
 import { BotAvatar } from './BotAvatar';
@@ -13,6 +14,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenBots, onOpenSettings, onOpenPairing }) => {
+  const insets = useSafeAreaInsets();
   const { activeBot, connectionStatus, attentionItemsCount, isGenerating } = useOpenMaus();
   const isConnected = connectionStatus === 'connected';
 
@@ -31,104 +33,110 @@ export const Header: React.FC<HeaderProps> = ({ onOpenBots, onOpenSettings, onOp
     onOpenPairing?.();
   };
 
-  return (
-    <View style={styles.container}>
-      {/* Active Agent Pill Selector */}
-      <TouchableOpacity
-        style={styles.agentPill}
-        onPress={handleBotPress}
-        activeOpacity={0.7}
-      >
-        <BotAvatar
-          name={activeBot?.name || 'Agent'}
-          provider={activeBot?.provider}
-          color={activeBot?.color}
-          size={28}
-          status={activeBot?.status}
-        />
-        <View style={styles.agentInfo}>
-          <View style={styles.nameRow}>
-            <Text style={styles.agentName} numberOfLines={1}>
-              {activeBot?.name || 'Antigravity'}
-            </Text>
-            <ChevronDown size={12} color={Colors.textMuted} style={{ marginLeft: 3 }} />
-          </View>
-          <Text style={styles.modelTag} numberOfLines={1}>
-            {isGenerating ? 'Thinking…' : (activeBot?.model || 'Autonomous Linux Agent')}
-          </Text>
-        </View>
-      </TouchableOpacity>
+  const topOffset = Math.max(insets.top, Platform.OS === 'android' ? 24 : 12) + 6;
 
-      {/* Right Controls */}
-      <View style={styles.rightGroup}>
-        {/* Status pill */}
+  return (
+    <View style={[styles.outerWrapper, { paddingTop: topOffset }]}>
+      <View style={styles.floatingPillHeader}>
+        {/* Active Agent Pill Selector */}
         <TouchableOpacity
-          style={styles.connectionPill}
-          onPress={handlePairingPress}
+          style={styles.agentPill}
+          onPress={handleBotPress}
           activeOpacity={0.7}
         >
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: isConnected ? Colors.accent : '#94A3B8' },
-            ]}
+          <BotAvatar
+            name={activeBot?.name || 'Agent'}
+            provider={activeBot?.provider}
+            color={activeBot?.color}
+            size={28}
+            status={activeBot?.status}
           />
-          <Text style={styles.statusText}>
-            {isConnected ? 'Synced' : 'Local Sandbox'}
-          </Text>
+          <View style={styles.agentInfo}>
+            <View style={styles.nameRow}>
+              <Text style={styles.agentName} numberOfLines={1}>
+                {activeBot?.name || 'Antigravity'}
+              </Text>
+              <ChevronDown size={12} color={Colors.textSecondary} style={{ marginLeft: 3 }} />
+            </View>
+            <Text style={styles.modelTag} numberOfLines={1}>
+              {isGenerating ? 'Thinking…' : (activeBot?.model || 'Autonomous Agent')}
+            </Text>
+          </View>
         </TouchableOpacity>
 
-        {/* Attention badge if any */}
-        {attentionItemsCount > 0 && (
+        {/* Right Controls */}
+        <View style={styles.rightGroup}>
+          {/* Status chip */}
           <TouchableOpacity
-            style={styles.attentionPill}
-            onPress={handleBotPress}
+            style={styles.connectionChip}
+            onPress={handlePairingPress}
             activeOpacity={0.7}
           >
-            <Text style={styles.attentionText}>{attentionItemsCount}</Text>
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: isConnected ? Colors.accent : '#94A3B8' },
+              ]}
+            />
+            <Text style={styles.statusText}>
+              {isConnected ? 'Synced' : 'Local Sandbox'}
+            </Text>
           </TouchableOpacity>
-        )}
 
-        {/* Settings button */}
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={handleSettingsPress}
-          activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Settings size={17} color={Colors.textSecondary} />
-        </TouchableOpacity>
+          {/* Attention badge if any */}
+          {attentionItemsCount > 0 && (
+            <TouchableOpacity
+              style={styles.attentionPill}
+              onPress={handleBotPress}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.attentionText}>{attentionItemsCount}</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Settings button */}
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleSettingsPress}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Settings size={16} color={Colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  outerWrapper: {
+    paddingHorizontal: 14,
+    paddingBottom: 6,
+    backgroundColor: 'transparent',
+  },
+  floatingPillHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(15, 23, 42, 0.06)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 30,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   agentPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.90)',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-    maxWidth: '58%',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    maxWidth: '56%',
   },
   agentInfo: {
     marginLeft: 8,
@@ -145,24 +153,23 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   modelTag: {
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
     fontSize: 10,
     marginTop: 1,
+    fontWeight: '500',
   },
   rightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
-  connectionPill: {
+  connectionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    paddingHorizontal: 10,
+    backgroundColor: 'rgba(15, 23, 42, 0.05)',
+    paddingHorizontal: 9,
     paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderRadius: 18,
     gap: 5,
   },
   statusDot: {
@@ -177,25 +184,23 @@ const styles = StyleSheet.create({
   },
   attentionPill: {
     backgroundColor: Colors.warning,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   attentionText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
   iconButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    backgroundColor: 'rgba(15, 23, 42, 0.04)',
   },
 });
