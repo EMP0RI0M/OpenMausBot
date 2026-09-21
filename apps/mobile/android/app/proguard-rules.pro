@@ -11,4 +11,18 @@
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 
-# Add any project specific keep options here:
+# Keep React Native native bridge classes and methods
+-keep class com.facebook.react.** { *; }
+-keepclassmembers class * extends com.facebook.react.bridge.ReactContextBaseJavaModule {
+   public <methods>;
+   @com.facebook.react.bridge.ReactMethod *;
+}
+-keep class com.facebook.react.bridge.ReactApplicationContext { *; }
+-keep class com.facebook.react.bridge.Promise { *; }
+
+# Keep OpenMausBot custom native engine modules and services
+-keep class com.openmausbot.companion.expo.** { *; }
+-keepclassmembers class com.openmausbot.companion.expo.** {
+    public <methods>;
+    @com.facebook.react.bridge.ReactMethod *;
+}
