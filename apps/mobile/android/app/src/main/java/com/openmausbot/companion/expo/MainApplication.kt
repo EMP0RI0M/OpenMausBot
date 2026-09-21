@@ -21,22 +21,31 @@ class MainApplication : Application(), ReactApplication {
   override val reactNativeHost: ReactNativeHost = ReactNativeHostWrapper(
       this,
       object : DefaultReactNativeHost(this) {
-        override fun getPackages(): List<ReactPackage> =
-            PackageList(this).packages.apply {
-              add(ProrootEnginePackage())
-              add(GoogleAuthBridgePackage())
-            }
+        override fun getPackages(): List<ReactPackage> {
+          val packages = PackageList(this).packages.toMutableList()
+          packages.add(ProrootEnginePackage())
+          packages.add(GoogleAuthBridgePackage())
+          return packages
+        }
 
-          override fun getJSMainModuleName(): String = "index"
+        override fun getJSMainModuleName(): String = "index"
 
-          override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
+        override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
 
-          override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
+        override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
       }
   )
 
-  override val reactHost: ReactHost
-    get() = ReactNativeHostWrapper.createReactHost(applicationContext, reactNativeHost)
+  override val reactHost: ReactHost?
+    get() = try {
+      if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+        ReactNativeHostWrapper.createReactHost(applicationContext, reactNativeHost)
+      } else {
+        null
+      }
+    } catch (_: Throwable) {
+      null
+    }
 
   override fun onCreate() {
     super.onCreate()

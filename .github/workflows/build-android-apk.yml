@@ -57,19 +57,19 @@ jobs:
             keytool -genkey -v -keystore apps/mobile/android/app/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
 
-      - name: Build Android Release APK
+      - name: Build Android APKs (Debug and Release)
         working-directory: apps/mobile/android
-        run: ./gradlew assembleRelease --no-daemon -x lint -x test
+        run: ./gradlew assembleDebug assembleRelease --no-daemon -x lint -x test
 
-      - name: Find & Verify APK
+      - name: Find & Verify APKs
         id: apk-find
         run: |
           echo "Listing generated APKs:"
-          ls -la apps/mobile/android/app/build/outputs/apk/release/
+          find apps/mobile/android/app/build/outputs/apk/ -type f -name "*.apk"
 
-      - name: Upload Release APK as Artifact
+      - name: Upload APKs as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: openmausbot-android-apk
-          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
+          path: apps/mobile/android/app/build/outputs/apk/**/*.apk
           retention-days: 30
