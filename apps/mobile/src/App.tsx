@@ -132,9 +132,11 @@ const MainNavigator: React.FC = () => {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <OpenMausProvider>
-        <MainNavigator />
-      </OpenMausProvider>
+      <ErrorBoundary onReset={() => {}}>
+        <OpenMausProvider>
+          <MainNavigator />
+        </OpenMausProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }
