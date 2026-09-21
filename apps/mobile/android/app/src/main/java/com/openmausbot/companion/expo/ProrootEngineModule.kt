@@ -17,6 +17,15 @@ class ProrootEngineModule(reactContext: ReactApplicationContext) : ReactContextB
     override fun getName(): String = "ProrootEngineModule"
 
     private val runningProcesses = ConcurrentHashMap<String, Process>()
+    private var deviceBridge: DeviceBridgeServer? = null
+
+    init {
+        try {
+            deviceBridge = DeviceBridgeServer(reactContext)
+            deviceBridge?.start()
+        } catch (_: Throwable) {
+        }
+    }
 
     private fun sendEvent(eventName: String, data: String, stream: String = "stdout") {
         val params = Arguments.createMap().apply {
@@ -64,10 +73,31 @@ class ProrootEngineModule(reactContext: ReactApplicationContext) : ReactContextB
                 putBoolean("isRootfsExtracted", rootfs.exists() && rootfs.list()?.isNotEmpty() == true)
                 putString("rootfsPath", rootfs.absolutePath)
                 putString("nativeLibDir", nativeLibDir.absolutePath)
+                putBoolean("isDeviceBridgeRunning", deviceBridge != null)
             }
             promise.resolve(map)
         } catch (e: Exception) {
             promise.reject("STATUS_CHECK_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun startHarnessService(promise: Promise) {
+        try {
+            HarnessKeepAliveService.start(reactApplicationContext)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("HARNESS_START_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun stopHarnessService(promise: Promise) {
+        try {
+            HarnessKeepAliveService.stop(reactApplicationContext)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("HARNESS_STOP_ERROR", e.message, e)
         }
     }
 

@@ -74,6 +74,21 @@ export const StandaloneConsoleScreen: React.FC<StandaloneConsoleScreenProps> = (
     setUserInput(cmd);
   };
 
+  const [harnessActive, setHarnessActive] = useState<boolean>(true);
+
+  const toggleHarness = async () => {
+    triggerHaptic.medium();
+    if (harnessActive) {
+      await ProrootSandbox.stopHarnessService();
+      setHarnessActive(false);
+      setConsoleLogs((prev) => prev + '[Harness Service]: Stopped keep-alive background locks.\n');
+    } else {
+      await ProrootSandbox.startHarnessService();
+      setHarnessActive(true);
+      setConsoleLogs((prev) => prev + '[Harness Service]: Started foreground keep-alive service (WakeLock + WifiLock active).\n');
+    }
+  };
+
   return (
     <View style={[styles.container, { paddingTop: topOffset }]}>
       {/* Floating Glass Header */}
@@ -84,23 +99,35 @@ export const StandaloneConsoleScreen: React.FC<StandaloneConsoleScreenProps> = (
             <Text style={styles.headerTitle}>Linux Sandbox</Text>
             <View style={styles.licenseRow}>
               <ShieldCheck size={11} color={Colors.accent} style={{ marginRight: 3 }} />
-              <Text style={styles.licenseText}>MIT proroot • Zero-Root</Text>
+              <Text style={styles.licenseText}>MIT proroot • DeepSeek Harness</Text>
             </View>
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.clearBtn}
-          onPress={handleClear}
-          activeOpacity={0.7}
-        >
-          <Trash2 size={16} color="#64748B" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <TouchableOpacity
+            style={[styles.harnessPill, harnessActive ? styles.harnessPillActive : styles.harnessPillInactive]}
+            onPress={toggleHarness}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.harnessPillText, harnessActive ? styles.harnessTextActive : styles.harnessTextInactive]}>
+              {harnessActive ? '⚡ Keep-Alive ON' : '💤 Keep-Alive OFF'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.clearBtn}
+            onPress={handleClear}
+            activeOpacity={0.7}
+          >
+            <Trash2 size={16} color="#64748B" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Quick Action Pills */}
       <View style={styles.quickActionsRow}>
-        {['agy --version', 'uname -a', 'ls -la /root', 'agy status'].map((cmd) => (
+        {['agy --version', 'uname -a', 'ls -la /root', 'curl -s http://127.0.0.1:3090/device/battery'].map((cmd) => (
           <TouchableOpacity
             key={cmd}
             style={styles.quickPill}
@@ -210,6 +237,30 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.70)',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
+  },
+  harnessPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  harnessPillActive: {
+    backgroundColor: 'rgba(34, 197, 94, 0.12)',
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  harnessPillInactive: {
+    backgroundColor: 'rgba(100, 116, 139, 0.1)',
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+  },
+  harnessPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  harnessTextActive: {
+    color: '#16A34A',
+  },
+  harnessTextInactive: {
+    color: '#64748B',
   },
   quickActionsRow: {
     flexDirection: 'row',

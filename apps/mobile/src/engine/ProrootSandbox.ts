@@ -14,6 +14,7 @@ export interface SandboxEnvironmentStatus {
   isRootfsExtracted: boolean;
   rootfsPath: string;
   nativeLibDir: string;
+  isDeviceBridgeRunning?: boolean;
 }
 
 export const ProrootSandbox = {
@@ -29,9 +30,24 @@ export const ProrootSandbox = {
         isRootfsExtracted: true,
         rootfsPath: '/data/data/com.openmausbot.companion.expo/files/linux/ubuntu',
         nativeLibDir: '/data/app/lib/arm64',
+        isDeviceBridgeRunning: true,
       };
     }
     return await ProrootEngineModule.getEnvironmentStatus();
+  },
+
+  startHarnessService: async (): Promise<boolean> => {
+    if (Platform.OS !== 'android' || !ProrootEngineModule?.startHarnessService) {
+      return true;
+    }
+    return await ProrootEngineModule.startHarnessService();
+  },
+
+  stopHarnessService: async (): Promise<boolean> => {
+    if (Platform.OS !== 'android' || !ProrootEngineModule?.stopHarnessService) {
+      return true;
+    }
+    return await ProrootEngineModule.stopHarnessService();
   },
 
   runLinuxCommand: async (bashCommand: string): Promise<string> => {
@@ -63,3 +79,4 @@ export const ProrootSandbox = {
     };
   },
 };
+
