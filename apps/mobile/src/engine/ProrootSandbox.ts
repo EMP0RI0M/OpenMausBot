@@ -24,23 +24,64 @@ export interface SandboxEnvironmentStatus {
   isDeviceBridgeRunning?: boolean;
 }
 
+// The "sandbox" is not simulated inside the app any more: it is the user's real
+// Ubuntu (Termux/PRoot) box, reached through exec_bridge.py (`POST /exec`).
+// This is what makes "the app controls the agents/box" actually true. Default
+// base is the same LAN address the cockpit PTY bridges are reached on.
+const DEFAULT_EXEC_BASE = 'http://10.108.123.51:8770';
+let execBase = DEFAULT_EXEC_BASE;
+let execToken = '';
+
+export function setExecTarget(base: string, token?: string): void {
+  if (base) execBase = base.replace(/\/+$/, '');
+  if (typeof token === 'string') execToken = token;
+}
+
+export function getExecTarget(): string {
+  return execBase;
+}
+
+async function execOverBridge(bashCommand: string, timeoutSec = 30): Promise<string> {
+  const res = await fetch(`${execBase}/exec`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(execToken ? { 'X-Exec-Token': execToken } : {}),
+    },
+    body: JSON.stringify({ cmd: bashCommand, timeout: timeoutSec, token: execToken || undefined }),
+  });
+  if (!res.ok) {
+    throw new Error(`exec bridge HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const out = typeof data?.output === 'string' ? data.output : '';
+  if (data?.ok) return out;
+  return `${out}\n[exit ${data?.exit ?? 'error'}]`.replace(/^\n/, '');
+}
+
 export const ProrootSandbox = {
   isAvailable: (): boolean => {
-    return Platform.OS === 'android' && !!ProrootEngineModule;
+    // A real command bridge is available on every platform (it is network, not
+    // a native module), so the console always has a backend to talk to.
+    return true;
   },
 
   getEnvironmentStatus: async (): Promise<SandboxEnvironmentStatus> => {
-    if (Platform.OS !== 'android' || !ProrootEngineModule?.getEnvironmentStatus) {
-      return {
-        hasProroot: true,
-        hasProot: true,
-        isRootfsExtracted: true,
-        rootfsPath: '/data/data/com.openmausbot.companion.expo/files/linux/ubuntu',
-        nativeLibDir: '/data/app/lib/arm64',
-        isDeviceBridgeRunning: true,
-      };
+    let bridgeRunning = false;
+    try {
+      const res = await fetch(`${execBase}/health`, { method: 'GET' });
+      bridgeRunning = res.ok;
+    } catch {
+      bridgeRunning = false;
     }
-    return await ProrootEngineModule.getEnvironmentStatus();
+    return {
+      hasProroot: true,
+      hasProot: true,
+      isRootfsExtracted: true,
+      rootfsPath: '/root (Ubuntu host via exec bridge)',
+      nativeLibDir: 'n/a',
+      isDeviceBridgeRunning: bridgeRunning,
+    };
   },
 
   startHarnessService: async (): Promise<boolean> => {
@@ -58,22 +99,24 @@ export const ProrootSandbox = {
   },
 
   runLinuxCommand: async (bashCommand: string): Promise<string> => {
-    if (Platform.OS !== 'android' || !ProrootEngineModule?.runLinuxCommand) {
-      // Simulation fallback on Web/iOS/Expo Go
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          if (bashCommand.includes('agy --version') || bashCommand.includes('antigravity')) {
-            resolve('Google Antigravity CLI (agy) v2.0-standalone [arm64-linux-gnu]\nEngine: proroot (MIT)\nSandbox status: Ready\n');
-          } else if (bashCommand.includes('uname') || bashCommand.includes('cat /etc/os-release')) {
-            resolve('Linux ubuntu-sandbox 6.1.0 #1 SMP aarch64 GNU/Linux\nUbuntu 24.04 LTS (Noble Numbat)\n');
-          } else {
-            resolve(`[proroot simulated execution]: ${bashCommand}\nExit code: 0\n`);
-          }
-        }, 600);
-      });
+    // Prefer the real Ubuntu host bridge. If it is unreachable, fall back to a
+    // native engine if one is ever wired, then to an honest offline message —
+    // never a fabricated result.
+    try {
+      return await execOverBridge(bashCommand);
+    } catch (bridgeErr: any) {
+      if (Platform.OS === 'android' && ProrootEngineModule?.runLinuxCommand) {
+        try {
+          return await ProrootEngineModule.runLinuxCommand(bashCommand);
+        } catch {
+          /* fall through to bridge error text */
+        }
+      }
+      return (
+        `[command bridge offline] could not reach ${execBase} (${bridgeErr?.message ?? bridgeErr}).\n` +
+        'Start it on the phone host with:  python3 /root/exec_bridge.py'
+      );
     }
-
-    return await ProrootEngineModule.runLinuxCommand(bashCommand);
   },
 
   subscribeToStream: (onData: (event: SandboxOutputEvent) => void): (() => void) => {
@@ -86,4 +129,3 @@ export const ProrootSandbox = {
     };
   },
 };
-

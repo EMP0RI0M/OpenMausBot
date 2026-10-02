@@ -22,9 +22,9 @@ interface StandaloneConsoleScreenProps {
 export const StandaloneConsoleScreen: React.FC<StandaloneConsoleScreenProps> = ({ onClose: _onClose }) => {
   const insets = useSafeAreaInsets();
   const [consoleLogs, setConsoleLogs] = useState<string>(
-    '⚡ Standalone Linux Sandbox (MIT proroot / Non-Copyleft)\n' +
-    '✓ Environment mapped to /root inside private app storage\n' +
-    '✓ Google Antigravity CLI (agy) runtime initialized\n' +
+    '⚡ Ubuntu Host Console (real commands via exec bridge)\n' +
+    '✓ Running on your Termux/PRoot Ubuntu box — cwd /root\n' +
+    '✓ Host CLIs available: agy (Antigravity), codex, qodercli, bash\n' +
     'Type commands below:\n\n'
   );
   const [userInput, setUserInput] = useState<string>('');
@@ -96,10 +96,10 @@ export const StandaloneConsoleScreen: React.FC<StandaloneConsoleScreenProps> = (
         <View style={styles.headerLeft}>
           <Terminal size={18} color={Colors.primary} style={{ marginRight: 8 }} />
           <View>
-            <Text style={styles.headerTitle}>Linux Sandbox</Text>
+            <Text style={styles.headerTitle}>Ubuntu Host Console</Text>
             <View style={styles.licenseRow}>
               <ShieldCheck size={11} color={Colors.accent} style={{ marginRight: 3 }} />
-              <Text style={styles.licenseText}>MIT proroot • DeepSeek Harness</Text>
+              <Text style={styles.licenseText}>exec bridge • real box (Termux/PRoot)</Text>
             </View>
           </View>
         </View>
