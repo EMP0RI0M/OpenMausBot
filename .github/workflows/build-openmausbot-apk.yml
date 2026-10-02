@@ -1,0 +1,49 @@
+name: Build OpenMausBot Android APK
+
+# Card-free build on an x86_64 runner (hermesc runs natively, Gradle+Android SDK download fine).
+# Trigger manually from the Actions tab, or push to these branches.
+on:
+  workflow_dispatch:
+  push:
+    branches: [mobile-apk, main, master]
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        # reads "packageManager": "pnpm@10.33.0" from package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+
+      - name: Build debug APK (auto-bundles JS via Metro + Hermes)
+        working-directory: apps/mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --warning-mode all
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openmausbot-debug-apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
