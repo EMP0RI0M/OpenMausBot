@@ -27,8 +27,9 @@ export interface SandboxEnvironmentStatus {
 // The "sandbox" is not simulated inside the app any more: it is the user's real
 // Ubuntu (Termux/PRoot) box, reached through exec_bridge.py (`POST /exec`).
 // This is what makes "the app controls the agents/box" actually true. Default
-// base is the same LAN address the cockpit PTY bridges are reached on.
-const DEFAULT_EXEC_BASE = 'http://10.108.123.51:8770';
+// base is loopback because the phone IS the host (Termux/PRoot); 127.0.0.1 is
+// stable across WiFi drop/roam, unlike a LAN IP (e.g. 10.108.123.51) that goes stale.
+const DEFAULT_EXEC_BASE = 'http://127.0.0.1:8770';
 let execBase = DEFAULT_EXEC_BASE;
 let execToken = '';
 
